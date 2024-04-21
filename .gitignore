@@ -12,7 +12,7 @@ dleps
 *.txt
 *.tsv
 *.hdf5
-*.pkl
+result
 *.joblib
 *.Rproj
 *events.out.tfevents*
