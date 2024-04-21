@@ -16,3 +16,4 @@ result
 *.joblib
 *.Rproj
 *events.out.tfevents*
+!requirements.txt
