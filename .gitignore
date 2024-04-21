@@ -2,6 +2,7 @@ data
 *.h5
 *.npy
 __pycache__
+dleps
 *.png
 *.log
 *.out
