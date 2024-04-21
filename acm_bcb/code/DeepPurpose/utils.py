@@ -130,6 +130,9 @@ def smiles2erg(s):
         features = np.zeros((315, ))
     return features
 
+def smiles2gvae(s):
+    pass
+
 def smiles2morgan(s, radius = 2, nBits = 1024):
     try:
         mol = Chem.MolFromSmiles(s)
