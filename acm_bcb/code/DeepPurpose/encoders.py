@@ -214,6 +214,33 @@ class CNN_RNN(nn.Sequential):
 		v = self.fc1(v.float())
 		return v
 
+class gVAE(nn.Sequential):
+	def __init__(self, encoding, **config):
+		super(gVAE, self).__init__()
+		if encoding == "drug":
+			input_dim = config['input_dim_drug']
+			hidden_dims_lst = config['gvae_hidden_dims_drugs']
+			latent_dim = config['gvae_latent_dim_drugs']
+
+			# Encoder layers
+			self.hidden_layers = nn.ModuleList(nn.Linear(input_dim, hidden_dims_lst[0]))
+			for i in range(len(hidden_dims_lst)-1):
+				self.hidden_layers.append(nn.Linear(hidden_dims_lst[i], hidden_dims_lst[i+1]))
+			self.output_layer = nn.Linear(hidden_dims_lst[-1], latent_dim * 2)
+
+	def forward(self, v):
+		for l in self.hidden_layers:
+			v = F.relu(l(v))
+		v = self.output_layer(v)
+		z = self.sample(mean, log_var)
+		mean, log_var = torch.chunk(v, 2, dim=1)
+		return z
+
+	def sample(self, mean, log_var):
+		std = torch.exp(0.5 * log_var)
+		eps = torch.rand_like(std)
+		z = mean + eps * std
+		return z
 
 class MLP(nn.Sequential):
 	def __init__(self, input_dim, output_dim, hidden_dims_lst):

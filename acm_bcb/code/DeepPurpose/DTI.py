@@ -232,6 +232,8 @@ class DBTA:
 			self.model_drug = CNN('drug', **config)
 		elif drug_encoding == 'CNN_RNN':
 			self.model_drug = CNN_RNN('drug', **config)
+		elif drug_encoding == 'gVAE':
+			self.model_drug = gVAE('drug', **config)
 		elif drug_encoding == 'Transformer':
 			self.model_drug = transformer('drug', **config)
 		elif drug_encoding == 'MPNN':

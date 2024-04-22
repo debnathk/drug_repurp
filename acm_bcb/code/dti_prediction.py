@@ -15,7 +15,7 @@ X_drugs = df_bindingdb_selection['std_smiles']
 X_targets = df_bindingdb_selection['BindingDB Target Chain Sequence']
 y = df_bindingdb_selection['pIC50']
 
-drug_encoding, target_encoding = 'CNN', 'CNN'
+drug_encoding, target_encoding = 'gVAE', 'CNN'
 
 train, val, test = utils.data_process(X_drugs, X_targets, y, 
                                 drug_encoding, target_encoding, 
@@ -26,11 +26,12 @@ print(train.head(1))
 config = utils.generate_config(drug_encoding = drug_encoding, 
                          target_encoding = target_encoding, 
                          cls_hidden_dims = [1024,1024,512], 
-                         train_epoch = 100, 
+                         train_epoch = 5, 
                          LR = 0.001, 
                          batch_size = 256,
-                         cnn_drug_filters = [32,64,96],
-					     cnn_drug_kernels = [4,6,8],
+                         input_dim_drug = 277*76,
+                         gvae_hidden_dims_drugs = [1024, 256, 128],
+                         gvae_latent_dim_drugs = 56,
                          cnn_target_filters = [32,64,96],
                          cnn_target_kernels = [4,8,12]
                         )
