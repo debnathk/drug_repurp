@@ -188,7 +188,7 @@ def smiles2gvaefeature(s):
     idx = np.array([_prod_map[prod] for prod in productions_seq], dtype=int)
     num_productions = len(idx)
     if num_productions > MAX_LEN:
-            print("Too large molecules, out of range")
+            # print("Too large molecules, out of range")
             one_hot[np.arange(MAX_LEN),idx[:MAX_LEN]] = 1.
     else:    
             one_hot[np.arange(num_productions),idx] = 1.

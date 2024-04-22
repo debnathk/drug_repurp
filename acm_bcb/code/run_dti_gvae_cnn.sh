@@ -1,5 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=bindingdb_dti_gvae_cnn_5
+#SBATCH --output ./slurm_logs/output_bindingdb_dti_gvae_cnn_epoch_100.log
 #SBATCH --error ./slurm_logs/error_bindingdb_dti_gvae_cnn_epoch_100.log
 #SBATCH --partition gpu
 #SBATCH --nodes 1

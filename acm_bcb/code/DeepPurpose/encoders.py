@@ -223,17 +223,19 @@ class gVAE(nn.Sequential):
 			latent_dim = config['gvae_latent_dim_drugs']
 
 			# Encoder layers
-			self.hidden_layers = nn.ModuleList(nn.Linear(input_dim, hidden_dims_lst[0]))
+			self.hidden_layers = nn.ModuleList()
+			self.hidden_layers.append(nn.Linear(input_dim, hidden_dims_lst[0]))
 			for i in range(len(hidden_dims_lst)-1):
 				self.hidden_layers.append(nn.Linear(hidden_dims_lst[i], hidden_dims_lst[i+1]))
 			self.output_layer = nn.Linear(hidden_dims_lst[-1], latent_dim * 2)
 
 	def forward(self, v):
+		v = v.view(v.size(0), -1) # Flatten the 2D input matrix
 		for l in self.hidden_layers:
 			v = F.relu(l(v))
 		v = self.output_layer(v)
-		z = self.sample(mean, log_var)
 		mean, log_var = torch.chunk(v, 2, dim=1)
+		z = self.sample(mean, log_var)
 		return z
 
 	def sample(self, mean, log_var):
