@@ -218,7 +218,7 @@ class gVAE(nn.Sequential):
 	def __init__(self, encoding, **config):
 		super(gVAE, self).__init__()
 		if encoding == "drug":
-			input_dim = config['input_dim_drug']
+			input_dim = config['gvae_input_dim_drug']
 			hidden_dims_lst = config['gvae_hidden_dims_drugs']
 			latent_dim = config['gvae_latent_dim_drugs']
 

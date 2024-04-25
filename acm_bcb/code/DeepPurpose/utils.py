@@ -888,6 +888,7 @@ def generate_config(drug_encoding = None, target_encoding = None,
 					cls_hidden_dims = [1024, 1024, 512],
 					mlp_hidden_dims_drug = [1024, 256, 64],
 					mlp_hidden_dims_target = [1024, 256, 64],
+					gvae_input_dim_drug = 277 * 76,
 					gvae_hidden_dims_drugs = [1024, 256, 128],
 					gvae_latent_dim_drugs = 56,
 					batch_size = 256,
@@ -978,7 +979,7 @@ def generate_config(drug_encoding = None, target_encoding = None,
 		base_config['cnn_drug_filters'] = cnn_drug_filters
 		base_config['cnn_drug_kernels'] = cnn_drug_kernels
 	elif drug_encoding == 'gVAE':
-		base_config['input_dim_drug'] = 277*76
+		base_config['gvae_input_dim_drug'] = gvae_input_dim_drug
 		base_config['gvae_hidden_dims_drugs'] = gvae_hidden_dims_drugs
 		base_config['gvae_latent_dim_drugs'] = gvae_latent_dim_drugs
 	elif drug_encoding == 'Transformer':

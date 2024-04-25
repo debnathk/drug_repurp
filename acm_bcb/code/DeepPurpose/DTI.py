@@ -502,7 +502,7 @@ class DBTA:
 
 		if val is not None:
 			#### after training 
-			prettytable_file = os.path.join(self.result_folder, "valid_markdowntable.txt")
+			prettytable_file = os.path.join(self.result_folder, f"{self.drug_encoding}_{self.target_encoding}_valid_markdowntable.txt")
 			with open(prettytable_file, 'w') as fp:
 				fp.write(table.get_string())
 
@@ -530,7 +530,7 @@ class DBTA:
 			######### learning record ###########
 
 			### 1. test results
-			prettytable_file = os.path.join(self.result_folder, "test_markdowntable.txt")
+			prettytable_file = os.path.join(self.result_folder, f"{self.drug_encoding}_{self.target_encoding}_test_markdowntable.txt")
 			with open(prettytable_file, 'w') as fp:
 				fp.write(test_table.get_string())
 
@@ -541,11 +541,11 @@ class DBTA:
 		plt.plot(iter_num, loss_history, "bo-")
 		plt.xlabel("iteration", fontsize = fontsize)
 		plt.ylabel("loss value", fontsize = fontsize)
-		pkl_file = os.path.join(self.result_folder, "loss_curve_iter.pkl")
+		pkl_file = os.path.join(self.result_folder, f"{self.drug_encoding}_{self.target_encoding}_loss_curve_iter.pkl")
 		with open(pkl_file, 'wb') as pck:
 			pickle.dump(loss_history, pck)
 
-		fig_file = os.path.join(self.result_folder, "loss_curve.png")
+		fig_file = os.path.join(self.result_folder, f"{self.drug_encoding}_{self.target_encoding}_loss_curve.png")
 		plt.savefig(fig_file)
 		if verbose:
 			print('--- Training Finished ---')

@@ -26,12 +26,12 @@ print(train.head(1))
 config = utils.generate_config(drug_encoding = drug_encoding, 
                          target_encoding = target_encoding, 
                          cls_hidden_dims = [1024,1024,512], 
-                         train_epoch = 5, 
+                         train_epoch = 100, 
                          LR = 0.001, 
                          batch_size = 256,
-                         input_dim_drug = 277*76,
-                         gvae_hidden_dims_drugs = [1024, 256, 128],
-                         gvae_latent_dim_drugs = 56,
+                         gvae_input_dim_drug = 277*76,
+                         gvae_hidden_dims_drugs = [512, 256],
+                         gvae_latent_dim_drugs = 256,
                          cnn_target_filters = [32,64,96],
                          cnn_target_kernels = [4,8,12]
                         )
