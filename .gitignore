@@ -15,5 +15,6 @@ dleps
 result
 *.joblib
 *.Rproj
+*.pkl
 *events.out.tfevents*
 !requirements.txt
