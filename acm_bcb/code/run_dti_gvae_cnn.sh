@@ -3,10 +3,7 @@
 #SBATCH --output ./slurm_logs/output_bindingdb_dti_gvae_cnn_epoch_100.log
 #SBATCH --error ./slurm_logs/error_bindingdb_dti_gvae_cnn_epoch_100.log
 #SBATCH --partition gpu
-#SBATCH --nodes 1
-#SBATCH --ntasks 1
-#SBATCH --cpus-per-task 4
-#SBATCH --mem=64G      
+#SBATCH --mem=32G      
 #SBATCH --gres=gpu:1  
 
 echo "Date"

@@ -891,6 +891,8 @@ def generate_config(drug_encoding = None, target_encoding = None,
 					gvae_input_dim_drug = 277 * 76,
 					gvae_hidden_dims_drugs = [1024, 256, 128],
 					gvae_latent_dim_drugs = 56,
+					gvae_drug_filters = [32,64,96],
+					gvae_drug_kernels = [4,6,8],
 					batch_size = 256,
 					train_epoch = 10,
 					test_every_X_epoch = 20,
@@ -982,6 +984,8 @@ def generate_config(drug_encoding = None, target_encoding = None,
 		base_config['gvae_input_dim_drug'] = gvae_input_dim_drug
 		base_config['gvae_hidden_dims_drugs'] = gvae_hidden_dims_drugs
 		base_config['gvae_latent_dim_drugs'] = gvae_latent_dim_drugs
+		base_config['gvae_drug_filters'] = gvae_drug_filters
+		base_config['gvae_drug_filters'] = gvae_drug_kernels
 	elif drug_encoding == 'Transformer':
 		base_config['input_dim_drug'] = 2586
 		base_config['transformer_emb_size_drug'] = transformer_emb_size_drug

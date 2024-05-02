@@ -221,12 +221,16 @@ class gVAE(nn.Sequential):
 			input_dim = config['gvae_input_dim_drug']
 			hidden_dims_lst = config['gvae_hidden_dims_drugs']
 			latent_dim = config['gvae_latent_dim_drugs']
+			drug_filters = config['gvae_drug_filters']
+			drug_kernels = config['gvae_drug_kernels']
 
 			# Encoder layers
 			self.hidden_layers = nn.ModuleList()
-			self.hidden_layers.append(nn.Linear(input_dim, hidden_dims_lst[0]))
-			for i in range(len(hidden_dims_lst)-1):
-				self.hidden_layers.append(nn.Linear(hidden_dims_lst[i], hidden_dims_lst[i+1]))
+			self.hidden_layers.append(nn.Conv1d(in_channels=input_dim[1], out_channels=drug_filters[0], kernel_size=drug_kernels[0]))
+			for i in range(1, len(drug_filters)):
+					self.hidden_layers.append(nn.Conv1d(in_channels=drug_filters[i-1], out_channels=drug_filters[i], kernel_size=drug_kernels[i]))
+			# for i in range(len(hidden_dims_lst)-1):
+			# 	self.hidden_layers.append(nn.Linear(hidden_dims_lst[i], hidden_dims_lst[i+1]))
 			self.output_layer = nn.Linear(hidden_dims_lst[-1], latent_dim * 2)
 
 	def forward(self, v):

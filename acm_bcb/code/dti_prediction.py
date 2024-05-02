@@ -31,10 +31,10 @@ config = utils.generate_config(drug_encoding = drug_encoding,
                          LR = 0.001, 
                          batch_size = 256,
                          gvae_input_dim_drug = 277*76,
-                         gvae_hidden_dims_drugs = [512, 256],
+                        #  gvae_hidden_dims_drugs = [512, 256],
                          gvae_latent_dim_drugs = 256,
-                        #  cnn_drug_filters = [32,64,96],
-                        #  cnn_drug_kernels = [4,8,12],
+                         gvae_drug_filters = [32,64,96],
+                         gvae_drug_kernels = [4,8,12],
                          cnn_target_filters = [32,64,96],
                          cnn_target_kernels = [4,8,12]
                         )
