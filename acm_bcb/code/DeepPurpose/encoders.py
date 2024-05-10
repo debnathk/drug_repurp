@@ -226,7 +226,7 @@ class gVAE(nn.Sequential):
 
 			# Encoder layers
 			self.hidden_layers = nn.ModuleList()
-			self.hidden_layers.append(nn.Conv1d(in_channels=input_dim[1], out_channels=drug_filters[0], kernel_size=drug_kernels[0]))
+			self.hidden_layers.append(nn.Conv1d(in_channels=76, out_channels=drug_filters[0], kernel_size=drug_kernels[0]))
 			for i in range(1, len(drug_filters)):
 					self.hidden_layers.append(nn.Conv1d(in_channels=drug_filters[i-1], out_channels=drug_filters[i], kernel_size=drug_kernels[i]))
 			# for i in range(len(hidden_dims_lst)-1):

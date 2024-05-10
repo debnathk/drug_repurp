@@ -985,7 +985,7 @@ def generate_config(drug_encoding = None, target_encoding = None,
 		base_config['gvae_hidden_dims_drugs'] = gvae_hidden_dims_drugs
 		base_config['gvae_latent_dim_drugs'] = gvae_latent_dim_drugs
 		base_config['gvae_drug_filters'] = gvae_drug_filters
-		base_config['gvae_drug_filters'] = gvae_drug_kernels
+		base_config['gvae_drug_kernels'] = gvae_drug_kernels
 	elif drug_encoding == 'Transformer':
 		base_config['input_dim_drug'] = 2586
 		base_config['transformer_emb_size_drug'] = transformer_emb_size_drug
