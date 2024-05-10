@@ -1,0 +1,6 @@
+python==3.7
+rdkit-pypi
+requests
+nltk
+# tensorflow>=1.15, <2.0
+# keras==2.3.0

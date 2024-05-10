@@ -1,0 +1,2 @@
+model_checkpoint_path: "vae_weights_refdrug"
+all_model_checkpoint_paths: "vae_weights_refdrug"
