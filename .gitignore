@@ -16,4 +16,5 @@ result
 *.Rproj
 *.pkl
 *.json
+!*requirements.txt
 *events.out.tfevents*
