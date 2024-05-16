@@ -15,4 +15,5 @@ result
 *.joblib
 *.Rproj
 *.pkl
+*.json
 *events.out.tfevents*

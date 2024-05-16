@@ -12,7 +12,6 @@ from __future__ import division
 
 import os
 from os import path
-os.chdir('/lustre/home/debnathk/drug_repurp/acm_bcb/code/dleps/code/DLEPS/')
 import requests
 
 import numpy as np

@@ -1,5 +1,5 @@
 from DeepPurpose import utils, dataset
-from DeepPurpose import DTI as models
+from DeepPurpose import DTI_tensorflow as models
 import warnings
 import pandas as pd
 warnings.filterwarnings("ignore")

@@ -19,7 +19,7 @@ import nltk
 import h5py
 import keras
 import tensorflow as tf
-from keras.layers import Input, Dense, Dropout, Lambda, Flatten, concatenate, Conv1D, GlobalMaxPooling1D, Layer, MaxPooling1D
+from keras.layers import Input, Dense, Dropout, Lambda, Flatten, concatenate, Conv1D, Layer, MaxPooling1D
 from keras.models import Model, Sequential
 from keras import backend as K
 from keras import optimizers, regularizers
@@ -73,8 +73,7 @@ class DLEPS(object):
 
     def _build_model(self):
         # Variational autoencoder weights
-        path = '/lustre/home/debnathk/drug_repurp/acm_bcb/code/'
-        grammar_weights = f'{path}dleps/data/vae.hdf5'
+        grammar_weights = '../../data/vae.hdf5'
         grammar_model = molecule_vae.ZincGrammarModel(grammar_weights)
         grammar_model.trainable = False
         self.grammar_model = grammar_model
@@ -98,10 +97,10 @@ class DLEPS(object):
 
         # CNN
         '''Define the CNN encoder for target'''
-        visible_1 = Input(shape=(26, 1000))
-        conv1_1 = Conv1D(32, 3, 1, activation="relu")(visible_1)
+        visible_1 = Input(shape=(26, 1000), name="visible_1")
+        conv1_1 = Conv1D(32, 3, strides=1, activation="relu", padding='same')(visible_1)
         maxpool_1 = MaxPooling1D(pool_size=2)(conv1_1)
-        conv1_2 = Conv1D(64, 3, 1, activation="relu")(maxpool_1)
+        conv1_2 = Conv1D(64, 3, strides=1, activation="relu", padding='same')(maxpool_1)
         maxpool_2 = MaxPooling1D(pool_size=2)(conv1_2)
         flatten_1 = Flatten()(maxpool_2)
         dense_1 = Dense(56, activation="relu")(flatten_1)
