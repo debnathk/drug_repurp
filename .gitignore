@@ -1,9 +1,9 @@
 data
+dleps
 *.h5
 *.npy
 __pycache__
 *.png
-*.log
 *.out
 *.sdf
 *.smi
