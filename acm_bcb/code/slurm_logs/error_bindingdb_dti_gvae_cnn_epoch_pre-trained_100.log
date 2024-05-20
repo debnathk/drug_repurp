@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/lustre/home/debnathk/drug_repurp/acm_bcb/code/dti_prediction_tf.py", line 1, in <module>
+    from DeepPurpose import utils, dataset
+  File "/lustre/home/debnathk/drug_repurp/acm_bcb/code/DeepPurpose/utils.py", line 2, in <module>
+    import pandas as pd
+ModuleNotFoundError: No module named 'pandas'

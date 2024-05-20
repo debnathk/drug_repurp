@@ -1,0 +1,33 @@
+Date
+Sun Apr 21 12:06:05 PM EDT 2024
+No of instances in the dataset: 18781
+Drug Target Interaction Prediction Mode...
+in total: 18781 drug-target pairs
+encoding drug...
+unique drugs: 2260
+encoding protein...
+unique target sequence: 1960
+splitting dataset...
+Done.
+                                              SMILES  ...                                    target_encoding
+0  CC(C)(C)NC(=O)[C@@H]1CN(Cc2cccnc2)CCN1C[C@@H](...  ...  [P, Q, I, T, L, W, Q, R, P, L, V, T, I, K, I, ...
+
+[1 rows x 5 columns]
+<DeepPurpose.DTI.DBTA object at 0x7fe3d0bc19a0>
+Let's use 1 GPU!
+--- Data Preparation ---
+--- Go for Training ---
+Training at Epoch 1 iteration 0 with loss 40.8489. Total time 0.00583 hours
+Validation at Epoch 1 with loss:2.14212, MSE: 2.55112 , Pearson Correlation: 0.42172 with p-value: 7.26E-82 , Concordance Index: 0.64393
+Training at Epoch 2 iteration 0 with loss 2.65977. Total time 0.03111 hours
+Validation at Epoch 2 with loss:2.14944, MSE: 2.19444 , Pearson Correlation: 0.40432 with p-value: 8.72E-75 , Concordance Index: 0.63636
+Training at Epoch 3 iteration 0 with loss 2.66206. Total time 0.05611 hours
+Validation at Epoch 3 with loss:2.48300, MSE: 2.03258 , Pearson Correlation: 0.51021 with p-value: 5.26E-125 , Concordance Index: 0.67729
+Training at Epoch 4 iteration 0 with loss 2.23204. Total time 0.0825 hours
+Validation at Epoch 4 with loss:2.36893, MSE: 1.85245 , Pearson Correlation: 0.60582 with p-value: 1.53E-188 , Concordance Index: 0.71344
+Training at Epoch 5 iteration 0 with loss 1.64299. Total time 0.10694 hours
+Validation at Epoch 5 with loss:1.76968, MSE: 1.56491 , Pearson Correlation: 0.64450 with p-value: 6.06E-221 , Concordance Index: 0.72959
+--- Go for Testing ---
+Testing MSE: 1.612205934446597 , Pearson Correlation: 0.6427063735904709 with p-value: 0.00E+00 , Concordance Index: 0.7292713199521347
+--- Training Finished ---
+Elapsed time: 857 seconds

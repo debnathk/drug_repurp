@@ -1,0 +1,29 @@
+2024-05-01 21:24:23.517655: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2024-05-01 21:25:08.610598: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+Traceback (most recent call last):
+  File "/lustre/home/debnathk/drug_repurp/acm_bcb/code/dti_prediction.py", line 45, in <module>
+    model.train(train, val, test)
+  File "/lustre/home/debnathk/drug_repurp/acm_bcb/code/DeepPurpose/DTI.py", line 438, in train
+    score = self.model(v_d, v_p)
+  File "/lustre/home/debnathk/drug_repurp/.venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/lustre/home/debnathk/drug_repurp/.venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/lustre/home/debnathk/drug_repurp/acm_bcb/code/DeepPurpose/DTI.py", line 49, in forward
+    v_D = self.model_drug(v_D)
+  File "/lustre/home/debnathk/drug_repurp/.venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/lustre/home/debnathk/drug_repurp/.venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/lustre/home/debnathk/drug_repurp/acm_bcb/code/DeepPurpose/encoders.py", line 239, in forward
+    v = F.relu(l(v))
+  File "/lustre/home/debnathk/drug_repurp/.venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/lustre/home/debnathk/drug_repurp/.venv/lib64/python3.9/site-packages/torch/nn/modules/module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/lustre/home/debnathk/drug_repurp/.venv/lib64/python3.9/site-packages/torch/nn/modules/conv.py", line 310, in forward
+    return self._conv_forward(input, self.weight, self.bias)
+  File "/lustre/home/debnathk/drug_repurp/.venv/lib64/python3.9/site-packages/torch/nn/modules/conv.py", line 306, in _conv_forward
+    return F.conv1d(input, weight, bias, self.stride,
+RuntimeError: Given groups=1, weight of size [32, 76, 4], expected input[1, 256, 21052] to have 76 channels, but got 256 channels instead

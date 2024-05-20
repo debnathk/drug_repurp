@@ -12,10 +12,11 @@ import pickle
 import os
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import molecule_vae
 
 import os
 
-from DeepPurpose.utils import *   
+from DeepPurpose.utils_tensorflow import *   
 from DeepPurpose.encoders_tensorflow import *
 
 class Classifier(tf.keras.Model):
@@ -43,6 +44,18 @@ class Classifier(tf.keras.Model):
             v_f = layer(self.dropout(v_f))
         return v_f
 
+def model_initialize(**config):
+    model = DBTA(**config)
+    return model
+
+def model_pretrained(path_dir=None, model=None):
+    if model is not None:
+        path_dir = download_pretrained_model(model)
+    config = load_dict(path_dir)
+    model = DBTA(**config)
+    model.load_pretrained(path_dir)
+    return model
+
 class DBTA(tf.keras.Model):
     def __init__(self, **config):
         super(DBTA, self).__init__()
@@ -55,13 +68,15 @@ class DBTA(tf.keras.Model):
         self.config['num_workers'] = self.config.get('num_workers', 0)
         self.config['decay'] = self.config.get('decay', 0)
 
-        if self.drug_encoding == 'Morgan' or self.drug_encoding == 'ErG' or self.drug_encoding == 'Pubchem' or self.drug_encoding == 'Daylight' or self.drug_encoding == 'rdkit_2d_normalized' or self.drug_encoding == 'ESPF':
-            self.model_drug = MLP(config['input_dim_drug'], config['hidden_dim_drug'], config['mlp_hidden_dims_drug'])
+        if self.drug_encoding == 'gVAE':
+            grammar_weights = '/lustre/home/debnathk/drug_repurp/acm_bcb/data/vae.hdf5'
+            grammar_model = molecule_vae.ZincGrammarModel(grammar_weights)
+            grammar_model.trainable = False
+            self.drug_model = grammar_model
         # Add other drug encoding methods here
 
-        if self.target_encoding == 'AAC' or self.target_encoding == 'PseudoAAC' or self.target_encoding == 'Conjoint_triad' or self.target_encoding == 'Quasi-seq' or self.target_encoding == 'ESPF':
-            self.model_protein = MLP(config['input_dim_protein'], config['hidden_dim_protein'], config['mlp_hidden_dims_target'])
-        # Add other target encoding methods here
+        if self.target_encoding == 'CNN':
+            self.model_protein = CNN('protein', **config)
 
         self.model = Classifier(self.model_drug, self.model_protein, **config)
 
@@ -105,7 +120,7 @@ class DBTA(tf.keras.Model):
         test_every_X_epoch = self.config.get('test_every_X_epoch', 40)
         loss_history = []
 
-        optimizer = Adam(lr=lr, decay=decay)
+        optimizer = Adam(learning_rate=lr, decay=decay)
 
         if verbose:
             print('--- Data Preparation ---')
@@ -218,6 +233,11 @@ class DBTA(tf.keras.Model):
         dataset = dataset.batch(self.config['batch_size'], drop_remainder=False)
         score = self.test(dataset.take(-1), repurposing_mode=True)
         return score
+    
+    def load_pretrained(self, path_dir):
+        weight_file = os.path.join(path_dir, 'model.h5')
+        self.model.load_weights(weight_file)
+        self.binary = self.config['binary']
 
     def plot_roc_auc(self, y_pred, y_label):
         roc_auc_file = os.path.join(self.result_folder, "roc-auc.jpg")

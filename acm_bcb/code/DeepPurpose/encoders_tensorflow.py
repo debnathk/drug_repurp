@@ -18,12 +18,12 @@
 # import os
 
 import tensorflow as tf
-from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Input, Lambda, RepeatVector, GRU, TimeDistributed
+from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Input, Lambda, RepeatVector, GRU, TimeDistributed, Reshape
 from tensorflow.keras import Model
 import numpy as np
 import zinc_grammar as G
 np.random.seed(3)
-from DeepPurpose.utils import *  
+from DeepPurpose.utils_tensorflow import *  
 
 class CNN(Model):
     def __init__(self, encoding, **config):
@@ -49,8 +49,8 @@ class CNN(Model):
         return x
 
 # helper variables in Keras format for parsing the grammar
-masks_K      = tf.variable(G.masks)
-ind_of_ind_K = tf.variable(G.ind_of_ind)
+masks_K      = tf.Variable(G.masks)
+ind_of_ind_K = tf.Variable(G.ind_of_ind)
 
 MAX_LEN = 277
 DIM = G.D
@@ -112,6 +112,7 @@ class gVAE():
                                  metrics=['accuracy'])
 
     def _encoderMeanVar(self, x, latent_rep_size, max_length, epsilon_std=0.01):
+        x = Reshape((max_length, 1, DIM))(x)  # Add singleton dimension
         h = Conv1D(9, 9, activation='relu', name='conv_1')(x)
         h = Conv1D(9, 9, activation='relu', name='conv_2')(h)
         h = Conv1D(10, 11, activation='relu', name='conv_3')(h)
@@ -124,6 +125,7 @@ class gVAE():
         return z_mean, z_log_var
 
     def _buildEncoder(self, x, latent_rep_size, max_length, epsilon_std=0.01):
+        x = Reshape((max_length, 1, DIM))(x) 
         h = Conv1D(9, 9, activation='relu', name='conv_1')(x)
         h = Conv1D(9, 9, activation='relu', name='conv_2')(h)
         h = Conv1D(10, 11, activation='relu', name='conv_3')(h)

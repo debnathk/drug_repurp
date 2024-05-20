@@ -1,0 +1,20 @@
+Date
+Wed May  1 09:21:37 PM EDT 2024
+No of instances in the dataset: 18781
+Drug Target Interaction Prediction Mode...
+in total: 18781 drug-target pairs
+encoding drug...
+unique drugs: 2260
+encoding protein...
+unique target sequence: 1960
+splitting dataset...
+Done.
+                                              SMILES  ...                                    target_encoding
+0  CC(C)(C)NC(=O)[C@@H]1CN(Cc2cccnc2)CCN1C[C@@H](...  ...  [P, Q, I, T, L, W, Q, R, P, L, V, T, I, K, I, ...
+
+[1 rows x 5 columns]
+<DeepPurpose.DTI.DBTA object at 0x7f58a8a0bfd0>
+Let's use CPU/s!
+--- Data Preparation ---
+--- Go for Training ---
+Elapsed time: 364 seconds

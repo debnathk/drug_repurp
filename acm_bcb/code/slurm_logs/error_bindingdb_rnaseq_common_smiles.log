@@ -1,0 +1,45 @@
+[03:11:00] SMILES Parse Error: syntax error while parsing: restricted
+[03:11:01] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:11:25] SMILES Parse Error: syntax error while parsing: restricted
+[03:11:25] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:11:49] SMILES Parse Error: syntax error while parsing: restricted
+[03:11:49] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:12:13] SMILES Parse Error: syntax error while parsing: restricted
+[03:12:13] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:12:38] SMILES Parse Error: syntax error while parsing: restricted
+[03:12:38] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:13:02] SMILES Parse Error: syntax error while parsing: restricted
+[03:13:02] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:13:24] SMILES Parse Error: syntax error while parsing: restricted
+[03:13:24] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:13:49] SMILES Parse Error: syntax error while parsing: restricted
+[03:13:49] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:14:13] SMILES Parse Error: syntax error while parsing: restricted
+[03:14:13] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:14:36] SMILES Parse Error: syntax error while parsing: restricted
+[03:14:36] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:15:01] SMILES Parse Error: syntax error while parsing: restricted
+[03:15:01] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:15:26] SMILES Parse Error: syntax error while parsing: restricted
+[03:15:26] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:15:51] SMILES Parse Error: syntax error while parsing: restricted
+[03:15:51] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:16:17] SMILES Parse Error: syntax error while parsing: restricted
+[03:16:17] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:16:41] SMILES Parse Error: syntax error while parsing: restricted
+[03:16:41] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:17:06] SMILES Parse Error: syntax error while parsing: restricted
+[03:17:06] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:17:29] SMILES Parse Error: syntax error while parsing: restricted
+[03:17:29] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:17:54] SMILES Parse Error: syntax error while parsing: restricted
+[03:17:54] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:18:16] SMILES Parse Error: syntax error while parsing: restricted
+[03:18:16] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:18:40] SMILES Parse Error: syntax error while parsing: restricted
+[03:18:40] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:19:03] SMILES Parse Error: syntax error while parsing: restricted
+[03:19:03] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+[03:19:28] SMILES Parse Error: syntax error while parsing: restricted
+[03:19:28] SMILES Parse Error: Failed parsing SMILES 'restricted' for input: 'restricted'
+slurmstepd: error: *** JOB 243419 ON athena102 CANCELLED AT 2024-04-01T03:19:44 ***
