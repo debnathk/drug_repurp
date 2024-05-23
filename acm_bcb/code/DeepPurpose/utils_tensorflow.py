@@ -6,10 +6,10 @@ from rdkit.Chem.Fingerprints import FingerprintMols
 from rdkit.Chem.rdReducedGraphs import GetErGFingerprint
 from DeepPurpose.pybiomed_helper import _GetPseudoAAC, CalculateAADipeptideComposition, \
 calcPubChemFingerAll, CalculateConjointTriad, GetQuasiSequenceOrder
-import torch
-from torch.utils import data
-from torch.autograd import Variable
-import torch.nn.functional as F
+# import torch
+# from torch.utils import data
+# from torch.autograd import Variable
+# import torch.nn.functional as F
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 
 os.environ["CUDA_VISIBLE_DEVICES"] = "4"
@@ -18,12 +18,16 @@ import nltk
 from functools import reduce
 import numpy as np  
 
+import tensorflow as tf
+from keras.utils import Sequence
+from keras import backend as K
+
 try:
 	from descriptastorus.descriptors import rdDescriptors, rdNormalizedDescriptors
 except:
 	raise ImportError("Please install pip install git+https://github.com/bp-kelley/descriptastorus and pip install pandas-flavor")
 from DeepPurpose.chemutils import get_mol, atom_features, bond_features, MAX_NB, ATOM_FDIM, BOND_FDIM
-from subword_nmt.apply_bpe import BPE
+# from subword_nmt.apply_bpe import BPE
 import codecs
 import pickle
 import wget
@@ -38,22 +42,22 @@ MAX_ATOM = 400
 MAX_BOND = MAX_ATOM * 2
 
 # ESPF encoding
-vocab_path = f"{this_dir}/ESPF/drug_codes_chembl_freq_1500.txt"
-bpe_codes_drug = codecs.open(vocab_path)
-dbpe = BPE(bpe_codes_drug, merges=-1, separator='')
-sub_csv = pd.read_csv(f"{this_dir}/ESPF/subword_units_map_chembl_freq_1500.csv")
+# vocab_path = f"{this_dir}/ESPF/drug_codes_chembl_freq_1500.txt"
+# bpe_codes_drug = codecs.open(vocab_path)
+# dbpe = BPE(bpe_codes_drug, merges=-1, separator='')
+# sub_csv = pd.read_csv(f"{this_dir}/ESPF/subword_units_map_chembl_freq_1500.csv")
 
-idx2word_d = sub_csv['index'].values
-words2idx_d = dict(zip(idx2word_d, range(0, len(idx2word_d))))
+# idx2word_d = sub_csv['index'].values
+# words2idx_d = dict(zip(idx2word_d, range(0, len(idx2word_d))))
 
-vocab_path = f"{this_dir}/ESPF/protein_codes_uniprot_2000.txt"
-bpe_codes_protein = codecs.open(vocab_path)
-pbpe = BPE(bpe_codes_protein, merges=-1, separator='')
+# vocab_path = f"{this_dir}/ESPF/protein_codes_uniprot_2000.txt"
+# bpe_codes_protein = codecs.open(vocab_path)
+# pbpe = BPE(bpe_codes_protein, merges=-1, separator='')
 #sub_csv = pd.read_csv(dataFolder + '/subword_units_map_protein.csv')
-sub_csv = pd.read_csv(f"{this_dir}/ESPF/subword_units_map_uniprot_2000.csv")
+# sub_csv = pd.read_csv(f"{this_dir}/ESPF/subword_units_map_uniprot_2000.csv")
 
-idx2word_p = sub_csv['index'].values
-words2idx_p = dict(zip(idx2word_p, range(0, len(idx2word_p))))
+# idx2word_p = sub_csv['index'].values
+# words2idx_p = dict(zip(idx2word_p, range(0, len(idx2word_p))))
 
 from DeepPurpose.chemutils import get_mol, atom_features, bond_features, MAX_NB
 
@@ -128,15 +132,6 @@ def index_select_ND(source, dim, index):
     target = source.index_select(dim, index.view(-1))
     return target.view(final_size)
 
-def smiles2erg(s):
-    try:
-        mol = Chem.MolFromSmiles(s)
-        features = np.array(GetErGFingerprint(mol))
-    except:
-        print('rdkit cannot find this SMILES for ErG: ' + s + 'convert to all 0 features')
-        features = np.zeros((315, ))
-    return features
-
 def smiles2gvaefeature(s):
 
     def xlength(y):
@@ -196,49 +191,6 @@ def smiles2gvaefeature(s):
 
     return one_hot
 
-def smiles2morgan(s, radius = 2, nBits = 1024):
-    try:
-        mol = Chem.MolFromSmiles(s)
-        features_vec = AllChem.GetMorganFingerprintAsBitVect(mol, radius, nBits=nBits)
-        features = np.zeros((1,))
-        DataStructs.ConvertToNumpyArray(features_vec, features)
-    except:
-        print('rdkit not found this smiles for morgan: ' + s + ' convert to all 0 features')
-        features = np.zeros((nBits, ))
-    return features
-
-def smiles2rdkit2d(s):    
-    try:
-        generator = rdNormalizedDescriptors.RDKit2DNormalized()
-        features = np.array(generator.process(s)[1:])
-        NaNs = np.isnan(features)
-        features[NaNs] = 0
-    except:
-        print('descriptastorus not found this smiles: ' + s + ' convert to all 0 features')
-        features = np.zeros((200, ))
-    return np.array(features)
-
-def smiles2daylight(s):
-	try:
-		NumFinger = 2048
-		mol = Chem.MolFromSmiles(s)
-		bv = FingerprintMols.FingerprintMol(mol)
-		temp = tuple(bv.GetOnBits())
-		features = np.zeros((NumFinger, ))
-		features[np.array(temp)] = 1
-	except:
-		print('rdkit not found this smiles: ' + s + ' convert to all 0 features')
-		features = np.zeros((2048, ))
-	return np.array(features)
-
-def smiles2pubchem(s):
-	try:
-		features = calcPubChemFingerAll(s)
-	except:
-		print('pubchem fingerprint not working for smiles: ' + s + ' convert to 0 vectors')
-		features = np.zeros((881, ))
-	return np.array(features)
-
 '''
 def smiles2dgl_canonical(s, node_featurizer, edge_featurizer):
 	try:
@@ -282,95 +234,6 @@ def target2ct(s):
 		print('Conjoint Triad fingerprint not working for smiles: ' + s + ' convert to 0 vectors')
 		features = np.zeros((343, ))
 	return np.array(features)
-
-def smiles2mpnnfeature(smiles):
-	## mpn.py::tensorize  
-	'''
-		data-flow:   
-			data_process(): apply(smiles2mpnnfeature)
-			DBTA: train(): data.DataLoader(data_process_loader())
-			mpnn_collate_func()
-
-	## utils.smiles2mpnnfeature -> utils.mpnn_collate_func -> utils.mpnn_feature_collate_func -> encoders.MPNN.forward
-
-	'''
-	try: 
-		padding = torch.zeros(ATOM_FDIM + BOND_FDIM)
-		fatoms, fbonds = [], [padding] 
-		in_bonds,all_bonds = [], [(-1,-1)] 
-		mol = get_mol(smiles)
-		n_atoms = mol.GetNumAtoms()
-		for atom in mol.GetAtoms():
-			fatoms.append( atom_features(atom))
-			in_bonds.append([])
-
-		for bond in mol.GetBonds():
-			a1 = bond.GetBeginAtom()
-			a2 = bond.GetEndAtom()
-			x = a1.GetIdx() 
-			y = a2.GetIdx()
-
-			b = len(all_bonds)
-			all_bonds.append((x,y))
-			fbonds.append( torch.cat([fatoms[x], bond_features(bond)], 0) )
-			in_bonds[y].append(b)
-
-			b = len(all_bonds)
-			all_bonds.append((y,x))
-			fbonds.append( torch.cat([fatoms[y], bond_features(bond)], 0) )
-			in_bonds[x].append(b)
-
-		total_bonds = len(all_bonds)
-		fatoms = torch.stack(fatoms, 0) 
-		fbonds = torch.stack(fbonds, 0) 
-		agraph = torch.zeros(n_atoms,MAX_NB).long()
-		bgraph = torch.zeros(total_bonds,MAX_NB).long()
-		for a in range(n_atoms):
-			for i,b in enumerate(in_bonds[a]):
-				agraph[a,i] = b
-
-		for b1 in range(1, total_bonds):
-			x,y = all_bonds[b1]
-			for i,b2 in enumerate(in_bonds[x]):
-				if all_bonds[b2][0] != y:
-					bgraph[b1,i] = b2
-
-	except: 
-		print('Molecules not found and change to zero vectors..')
-		fatoms = torch.zeros(0,39)
-		fbonds = torch.zeros(0,50)
-		agraph = torch.zeros(0,6)
-		bgraph = torch.zeros(0,6)
-	#fatoms, fbonds, agraph, bgraph = [], [], [], [] 
-	#print(fatoms.shape, fbonds.shape, agraph.shape, bgraph.shape)
-	Natom, Nbond = fatoms.shape[0], fbonds.shape[0]
-
-
-	''' 
-	## completion to make feature size equal. 
-	MAX_ATOM = 100
-	MAX_BOND = 200
-	'''
-	atoms_completion_num = MAX_ATOM - fatoms.shape[0]
-	bonds_completion_num = MAX_BOND - fbonds.shape[0]
-	try:
-		assert atoms_completion_num >= 0 and bonds_completion_num >= 0
-	except:
-		raise Exception("Please increasing MAX_ATOM in line 26 utils.py, for example, MAX_ATOM=600 and reinstall it via 'python setup.py install'. The current setting is for small molecule. ")
-
-
-	fatoms_dim = fatoms.shape[1]
-	fbonds_dim = fbonds.shape[1]
-	fatoms = torch.cat([fatoms, torch.zeros(atoms_completion_num, fatoms_dim)], 0)
-	fbonds = torch.cat([fbonds, torch.zeros(bonds_completion_num, fbonds_dim)], 0)
-	agraph = torch.cat([agraph.float(), torch.zeros(atoms_completion_num, MAX_NB)], 0)
-	bgraph = torch.cat([bgraph.float(), torch.zeros(bonds_completion_num, MAX_NB)], 0)
-	# print("atom size", fatoms.shape[0], agraph.shape[0])
-	# print("bond size", fbonds.shape[0], bgraph.shape[0])
-	shape_tensor = torch.Tensor([Natom, Nbond]).view(1,-1)
-	return [fatoms.float(), fbonds.float(), agraph.float(), bgraph.float(), shape_tensor.float()]
-
-
 
 # random_fold
 def create_fold(df, fold_seed, frac):
@@ -424,53 +287,6 @@ def encode_drug(df_data, drug_encoding, column_name = 'SMILES', save_column_name
 		unique = pd.Series(df_data[column_name].unique()).apply(smiles2gvaefeature)
 		unique_dict = dict(zip(df_data[column_name].unique(), unique))
 		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding == 'Morgan':
-		unique = pd.Series(df_data[column_name].unique()).apply(smiles2morgan)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding == 'Pubchem':
-		unique = pd.Series(df_data[column_name].unique()).apply(smiles2pubchem)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding == 'Daylight':
-		unique = pd.Series(df_data[column_name].unique()).apply(smiles2daylight)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding == 'rdkit_2d_normalized':
-		unique = pd.Series(df_data[column_name].unique()).apply(smiles2rdkit2d)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding == 'ESPF':
-		unique = pd.Series(df_data[column_name].unique()).apply(drug2espf)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding == 'CNN':
-		unique = pd.Series(df_data[column_name].unique()).apply(trans_drug)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-		# the embedding is large and not scalable but quick, so we move to encode in dataloader batch. 
-	elif drug_encoding == 'CNN_RNN':
-		unique = pd.Series(df_data[column_name].unique()).apply(trans_drug)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding == 'Transformer':
-		unique = pd.Series(df_data[column_name].unique()).apply(drug2emb_encoder)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding == 'MPNN':
-		unique = pd.Series(df_data[column_name].unique()).apply(smiles2mpnnfeature)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding == 'ErG':
-		unique = pd.Series(df_data[column_name].unique()).apply(smiles2erg)
-		unique_dict = dict(zip(df_data[column_name].unique(), unique))
-		df_data[save_column_name] = [unique_dict[i] for i in df_data[column_name]]
-	elif drug_encoding in ['DGL_GCN', 'DGL_NeuralFP']:
-		df_data[save_column_name] = df_data[column_name]
-	elif drug_encoding == 'DGL_AttentiveFP':
-		df_data[save_column_name] = df_data[column_name]
-	elif drug_encoding in ['DGL_GIN_AttrMasking', 'DGL_GIN_ContextPred']:
-		df_data[save_column_name] = df_data[column_name]
 	else:
 		raise AttributeError("Please use the correct drug encoding available!")
 	return df_data
@@ -478,41 +294,8 @@ def encode_drug(df_data, drug_encoding, column_name = 'SMILES', save_column_name
 def encode_protein(df_data, target_encoding, column_name = 'Target Sequence', save_column_name = 'target_encoding'):
 	print('encoding protein...')
 	print('unique target sequence: ' + str(len(df_data[column_name].unique())))
-	if target_encoding == 'AAC':
-		print('-- Encoding AAC takes time. Time Reference: 24s for ~100 sequences in a CPU.\
-				 Calculate your time by the unique target sequence #, instead of the entire dataset.')
-		AA = pd.Series(df_data[column_name].unique()).apply(target2aac)
-		AA_dict = dict(zip(df_data[column_name].unique(), AA))
-		df_data[save_column_name] = [AA_dict[i] for i in df_data[column_name]]
-	elif target_encoding == 'PseudoAAC':
-		print('-- Encoding PseudoAAC takes time. Time Reference: 462s for ~100 sequences in a CPU.\
-				 Calculate your time by the unique target sequence #, instead of the entire dataset.')
-		AA = pd.Series(df_data[column_name].unique()).apply(target2paac)
-		AA_dict = dict(zip(df_data[column_name].unique(), AA))
-		df_data[save_column_name] = [AA_dict[i] for i in df_data[column_name]]
-	elif target_encoding == 'Conjoint_triad':
-		AA = pd.Series(df_data[column_name].unique()).apply(target2ct)
-		AA_dict = dict(zip(df_data[column_name].unique(), AA))
-		df_data[save_column_name] = [AA_dict[i] for i in df_data[column_name]]
-	elif target_encoding == 'Quasi-seq':
-		AA = pd.Series(df_data[column_name].unique()).apply(target2quasi)
-		AA_dict = dict(zip(df_data[column_name].unique(), AA))
-		df_data[save_column_name] = [AA_dict[i] for i in df_data[column_name]]
-	elif target_encoding == 'ESPF':
-		AA = pd.Series(df_data[column_name].unique()).apply(protein2espf)
-		AA_dict = dict(zip(df_data[column_name].unique(), AA))
-		df_data[save_column_name] = [AA_dict[i] for i in df_data[column_name]]
-	elif target_encoding == 'CNN':
+	if target_encoding == 'CNN':
 		AA = pd.Series(df_data[column_name].unique()).apply(trans_protein)
-		AA_dict = dict(zip(df_data[column_name].unique(), AA))
-		df_data[save_column_name] = [AA_dict[i] for i in df_data[column_name]]
-		# the embedding is large and not scalable but quick, so we move to encode in dataloader batch. 
-	elif target_encoding == 'CNN_RNN':
-		AA = pd.Series(df_data[column_name].unique()).apply(trans_protein)
-		AA_dict = dict(zip(df_data[column_name].unique(), AA))
-		df_data[save_column_name] = [AA_dict[i] for i in df_data[column_name]]
-	elif target_encoding == 'Transformer':
-		AA = pd.Series(df_data[column_name].unique()).apply(protein2emb_encoder)
 		AA_dict = dict(zip(df_data[column_name].unique(), AA))
 		df_data[save_column_name] = [AA_dict[i] for i in df_data[column_name]]
 	else:
@@ -686,7 +469,7 @@ def data_process_repurpose_virtual_screening(X_repurpose, target, drug_encoding,
 
 	return df
 
-class data_process_loader(data.Dataset):
+class data_process_loader(Sequence):
 
 	def __init__(self, list_IDs, labels, df, **config):
 		'Initialization'
@@ -695,27 +478,6 @@ class data_process_loader(data.Dataset):
 		self.df = df
 		self.config = config
 
-		if self.config['drug_encoding'] in ['DGL_GCN', 'DGL_NeuralFP']:
-			from dgllife.utils import smiles_to_bigraph, CanonicalAtomFeaturizer, CanonicalBondFeaturizer
-			self.node_featurizer = CanonicalAtomFeaturizer()
-			self.edge_featurizer = CanonicalBondFeaturizer(self_loop = True)
-			from functools import partial
-			self.fc = partial(smiles_to_bigraph, add_self_loop=True)
-
-		elif self.config['drug_encoding'] == 'DGL_AttentiveFP':
-			from dgllife.utils import smiles_to_bigraph, AttentiveFPAtomFeaturizer, AttentiveFPBondFeaturizer
-			self.node_featurizer = AttentiveFPAtomFeaturizer()
-			self.edge_featurizer = AttentiveFPBondFeaturizer(self_loop=True)
-			from functools import partial
-			self.fc = partial(smiles_to_bigraph, add_self_loop=True)
-
-		elif self.config['drug_encoding'] in ['DGL_GIN_AttrMasking', 'DGL_GIN_ContextPred']:
-			from dgllife.utils import smiles_to_bigraph, PretrainAtomFeaturizer, PretrainBondFeaturizer
-			self.node_featurizer = PretrainAtomFeaturizer()
-			self.edge_featurizer = PretrainBondFeaturizer()
-			from functools import partial
-			self.fc = partial(smiles_to_bigraph, add_self_loop=True)
-
 	def __len__(self):
 		'Denotes the total number of samples'
 		return len(self.list_IDs)
@@ -723,34 +485,19 @@ class data_process_loader(data.Dataset):
 	def __getitem__(self, index):
 		'Generates one sample of data'
 		index = self.list_IDs[index]
-		v_d = self.df.iloc[index]['drug_encoding']        
+		v_d = self.df.iloc[index]['drug_encoding']
 		if self.config['drug_encoding'] == 'CNN' or self.config['drug_encoding'] == 'CNN_RNN':
 			v_d = drug_2_embed(v_d)
 		elif self.config['drug_encoding'] in ['DGL_GCN', 'DGL_NeuralFP', 'DGL_GIN_AttrMasking', 'DGL_GIN_ContextPred', 'DGL_AttentiveFP']:
-			v_d = self.fc(smiles = v_d, node_featurizer = self.node_featurizer, edge_featurizer = self.edge_featurizer)
+			v_d = self.fc(smiles=v_d, node_featurizer=self.node_featurizer, edge_featurizer=self.edge_featurizer)
 		v_p = self.df.iloc[index]['target_encoding']
 		if self.config['target_encoding'] == 'CNN' or self.config['target_encoding'] == 'CNN_RNN':
 			v_p = protein_2_embed(v_p)
 		y = self.labels[index]
 		return v_d, v_p, y
-	
-	def batch(self, batch_size, drop_remainder=False):
-		'Generates batches of samples'
-		num_samples = len(self)
-		if drop_remainder:
-			num_batches = num_samples // batch_size
-		else:
-			num_batches = (num_samples + batch_size - 1) // batch_size
-
-		for i in range(num_batches):
-			start_idx = i * batch_size
-			end_idx = min((i + 1) * batch_size, num_samples)
-			batch_indices = range(start_idx, end_idx)
-			batch_data = [self.__getitem__(idx) for idx in batch_indices]
-			yield tuple(zip(*batch_data))
 
 
-class data_process_DDI_loader(data.Dataset):
+class data_process_DDI_loader(Sequence):
 
 	def __init__(self, list_IDs, labels, df, **config):
 		'Initialization'
@@ -800,7 +547,7 @@ class data_process_DDI_loader(data.Dataset):
 		return v_d, v_p, y
 
 
-class data_process_PPI_loader(data.Dataset):
+class data_process_PPI_loader(Sequence):
 
 	def __init__(self, list_IDs, labels, df, **config):
 		'Initialization'
@@ -825,7 +572,7 @@ class data_process_PPI_loader(data.Dataset):
 		y = self.labels[index]
 		return v_d, v_p, y
 
-class data_process_loader_Property_Prediction(data.Dataset):
+class data_process_loader_Property_Prediction(Sequence):
 
 	def __init__(self, list_IDs, labels, df, **config):
 		'Initialization'
@@ -870,7 +617,7 @@ class data_process_loader_Property_Prediction(data.Dataset):
 		y = self.labels[index]
 		return v_d, y
 
-class data_process_loader_Protein_Prediction(data.Dataset):
+class data_process_loader_Protein_Prediction(Sequence):
 
 	def __init__(self, list_IDs, labels, df, **config):
 		'Initialization'
@@ -942,10 +689,10 @@ def generate_config(drug_encoding = None, target_encoding = None,
 					cuda_id = None,
 					gnn_hid_dim_drug = 64,
 					gnn_num_layers = 3,
-					gnn_activation = F.relu,
+					# gnn_activation = F.relu,
 					neuralfp_max_degree = 10,
 					neuralfp_predictor_hid_dim = 128,
-					neuralfp_predictor_activation = torch.tanh,
+					# neuralfp_predictor_activation = torch.tanh,
 					attentivefp_num_timesteps = 2
 					):
 
@@ -1107,68 +854,68 @@ def convert_y_unit(y, from_, to_):
 		return y[0]
 	return y
 
-def protein2emb_encoder(x):
-    max_p = 545
-    t1 = pbpe.process_line(x).split()  # split
-    try:
-        i1 = np.asarray([words2idx_p[i] for i in t1])  # index
-    except:
-        i1 = np.array([0])
+# def protein2emb_encoder(x):
+#     max_p = 545
+#     t1 = pbpe.process_line(x).split()  # split
+#     try:
+#         i1 = np.asarray([words2idx_p[i] for i in t1])  # index
+#     except:
+#         i1 = np.array([0])
 
-    l = len(i1)
+#     l = len(i1)
    
-    if l < max_p:
-        i = np.pad(i1, (0, max_p - l), 'constant', constant_values = 0)
-        input_mask = ([1] * l) + ([0] * (max_p - l))
-    else:
-        i = i1[:max_p]
-        input_mask = [1] * max_p
+#     if l < max_p:
+#         i = np.pad(i1, (0, max_p - l), 'constant', constant_values = 0)
+#         input_mask = ([1] * l) + ([0] * (max_p - l))
+#     else:
+#         i = i1[:max_p]
+#         input_mask = [1] * max_p
         
-    return i, np.asarray(input_mask)
+#     return i, np.asarray(input_mask)
 
-def drug2emb_encoder(x):
+# def drug2emb_encoder(x):
 
-    max_d = 50
-    t1 = dbpe.process_line(x).split()  # split
-    try:
-        i1 = np.asarray([words2idx_d[i] for i in t1])  # index
-    except:
-        i1 = np.array([0])
+#     max_d = 50
+#     t1 = dbpe.process_line(x).split()  # split
+#     try:
+#         i1 = np.asarray([words2idx_d[i] for i in t1])  # index
+#     except:
+#         i1 = np.array([0])
     
-    l = len(i1)
+#     l = len(i1)
 
-    if l < max_d:
-        i = np.pad(i1, (0, max_d - l), 'constant', constant_values = 0)
-        input_mask = ([1] * l) + ([0] * (max_d - l))
+#     if l < max_d:
+#         i = np.pad(i1, (0, max_d - l), 'constant', constant_values = 0)
+#         input_mask = ([1] * l) + ([0] * (max_d - l))
 
-    else:
-        i = i1[:max_d]
-        input_mask = [1] * max_d
+#     else:
+#         i = i1[:max_d]
+#         input_mask = [1] * max_d
 
-    return i, np.asarray(input_mask)
-    '''
-		the returned tuple is fed into models.transformer.forward() 
-    '''
+#     return i, np.asarray(input_mask)
+#     '''
+# 		the returned tuple is fed into models.transformer.forward() 
+#     '''
 
-def drug2espf(x):
-    t1 = dbpe.process_line(x).split()  # split
-    try:
-        i1 = np.asarray([words2idx_d[i] for i in t1])  # index
-    except:
-        i1 = np.array([0])
-    v1 = np.zeros(len(idx2word_d),)
-    v1[i1] = 1
-    return v1	
+# def drug2espf(x):
+#     t1 = dbpe.process_line(x).split()  # split
+#     try:
+#         i1 = np.asarray([words2idx_d[i] for i in t1])  # index
+#     except:
+#         i1 = np.array([0])
+#     v1 = np.zeros(len(idx2word_d),)
+#     v1[i1] = 1
+#     return v1	
 
-def protein2espf(x):
-    t1 = pbpe.process_line(x).split()  # split
-    try:
-        i1 = np.asarray([words2idx_p[i] for i in t1])  # index
-    except:
-        i1 = np.array([0])
-    v1 = np.zeros(len(idx2word_p),)
-    v1[i1] = 1
-    return v1
+# def protein2espf(x):
+#     t1 = pbpe.process_line(x).split()  # split
+#     try:
+#         i1 = np.asarray([words2idx_p[i] for i in t1])  # index
+#     except:
+#         i1 = np.array([0])
+#     v1 = np.zeros(len(idx2word_p),)
+#     v1[i1] = 1
+#     return v1
 
 # '?' padding
 amino_char = ['?', 'A', 'C', 'B', 'E', 'D', 'G', 'F', 'I', 'H', 'K', 'M', 'L', 'O',
@@ -1224,26 +971,40 @@ URLs = {
 	}
 
 def obtain_compound_embedding(net, file, drug_encoding):
-
-	if drug_encoding == 'CNN' or drug_encoding == 'CNN_RNN':
-		v_d = [drug_2_embed(i) for i in file['drug_encoding'].values]
-		x = np.stack(v_d)
-	elif drug_encoding == 'MPNN':
-		x = mpnn_collate_func(file['drug_encoding'].values)
-	else:
-		v_d = file['drug_encoding'].values
-		x = np.stack(v_d)
-	return net.model_drug(torch.FloatTensor(x))
+    if drug_encoding == 'CNN' or drug_encoding == 'CNN_RNN':
+        v_d = [drug_2_embed(i) for i in file['drug_encoding'].values]
+        x = np.stack(v_d)
+    elif drug_encoding == 'MPNN':
+        x = mpnn_collate_func(file['drug_encoding'].values)
+    else:
+        v_d = file['drug_encoding'].values
+        x = np.stack(v_d)
+    
+    embedding_output = net.model_drug(x)
+    
+    # Create a Keras function to run the embedding operation
+    embedding_func = K.function([model_input], [embedding_output])
+    embedding = embedding_func([x])[0]
+    
+    return embedding
 
 def obtain_protein_embedding(net, file, target_encoding):
+    if target_encoding == 'CNN' or target_encoding == 'CNN_RNN':
+        v_d = [protein_2_embed(i) for i in file['target_encoding'].values]
+        x = np.stack(v_d)
+    else:
+        v_d = file['target_encoding'].values
+        x = np.stack(v_d)
+    
+    # Directly feed the input data into the model
+    embedding_output = net.model_protein(x)
+    
+    # Create a Keras function to run the embedding operation
+    embedding_func = K.function([], [embedding_output])
+    embedding = embedding_func([])[0]
+        
+    return embedding
 
-	if target_encoding == 'CNN' or target_encoding == 'CNN_RNN':
-		v_d = [protein_2_embed(i) for i in file['target_encoding'].values]
-		x = np.stack(v_d)
-	else:
-		v_d = file['target_encoding'].values
-		x = np.stack(v_d)
-	return net.model_protein(torch.FloatTensor(x))
 
 # def mpnn_feature_collate_func(x): 
 # 	## first version 
@@ -1251,27 +1012,27 @@ def obtain_protein_embedding(net, file, target_encoding):
 
 
 ## utils.smiles2mpnnfeature -> utils.mpnn_collate_func -> utils.mpnn_feature_collate_func -> encoders.MPNN.forward
-def mpnn_feature_collate_func(x):
-	N_atoms_scope = torch.cat([i[4] for i in x], 0)
-	f_a = torch.cat([x[j][0].unsqueeze(0) for j in range(len(x))], 0)
-	f_b = torch.cat([x[j][1].unsqueeze(0) for j in range(len(x))], 0)
-	agraph_lst, bgraph_lst = [], []
-	for j in range(len(x)):
-		agraph_lst.append(x[j][2].unsqueeze(0))
-		bgraph_lst.append(x[j][3].unsqueeze(0))
-	agraph = torch.cat(agraph_lst, 0)
-	bgraph = torch.cat(bgraph_lst, 0)
-	return [f_a, f_b, agraph, bgraph, N_atoms_scope]
+# def mpnn_feature_collate_func(x):
+# 	N_atoms_scope = torch.cat([i[4] for i in x], 0)
+# 	f_a = torch.cat([x[j][0].unsqueeze(0) for j in range(len(x))], 0)
+# 	f_b = torch.cat([x[j][1].unsqueeze(0) for j in range(len(x))], 0)
+# 	agraph_lst, bgraph_lst = [], []
+# 	for j in range(len(x)):
+# 		agraph_lst.append(x[j][2].unsqueeze(0))
+# 		bgraph_lst.append(x[j][3].unsqueeze(0))
+# 	agraph = torch.cat(agraph_lst, 0)
+# 	bgraph = torch.cat(bgraph_lst, 0)
+# 	return [f_a, f_b, agraph, bgraph, N_atoms_scope]
 
 
-## utils.smiles2mpnnfeature -> utils.mpnn_collate_func -> utils.mpnn_feature_collate_func -> encoders.MPNN.forward 
-def mpnn_collate_func(x):
-	mpnn_feature = [i[0] for i in x]
-	mpnn_feature = mpnn_feature_collate_func(mpnn_feature)
-	from torch.utils.data.dataloader import default_collate
-	x_remain = [list(i[1:]) for i in x]
-	x_remain_collated = default_collate(x_remain)
-	return [mpnn_feature] + x_remain_collated
+# ## utils.smiles2mpnnfeature -> utils.mpnn_collate_func -> utils.mpnn_feature_collate_func -> encoders.MPNN.forward 
+# def mpnn_collate_func(x):
+# 	mpnn_feature = [i[0] for i in x]
+# 	mpnn_feature = mpnn_feature_collate_func(mpnn_feature)
+# 	from torch.utils.data.dataloader import default_collate
+# 	x_remain = [list(i[1:]) for i in x]
+# 	x_remain_collated = default_collate(x_remain)
+# 	return [mpnn_feature] + x_remain_collated
 
 name2ids = {
 	'cnn_cnn_bindingdb': 4159715,

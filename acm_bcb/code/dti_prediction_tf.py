@@ -1,4 +1,4 @@
-from DeepPurpose import utils_tensorflow, dataset
+from DeepPurpose import utils_tensorflow
 from DeepPurpose import DTI_tensorflow as models
 import warnings
 import pandas as pd

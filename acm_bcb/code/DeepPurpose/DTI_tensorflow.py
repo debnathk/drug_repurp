@@ -1,8 +1,10 @@
 import tensorflow as tf
-# from tensorflow.keras.layers import Input, Conv1D, Flatten, Dense, Lambda, RepeatVector, GRU, TimeDistributed
-# from tensorflow.keras.models import Model
-from tensorflow.keras.losses import BinaryCrossentropy, MeanSquaredError
-from tensorflow.keras.optimizers import Adam
+tf.enable_eager_execution()
+import keras
+from keras.layers import Input, Conv1D, Flatten, Dense, Lambda, RepeatVector, GRU, TimeDistributed, concatenate, Dropout
+from keras.models import Model
+from keras.losses import BinaryCrossentropy, MeanSquaredError
+from keras.optimizers import Adam
 import numpy as np
 # import pandas as pd
 from sklearn.metrics import roc_auc_score, average_precision_score, f1_score, log_loss, mean_squared_error
@@ -12,14 +14,18 @@ import pickle
 import os
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-import molecule_vae
+import molecule_vae_single
+# from dleps_predictor2 import DLEPS
 
 import os
 
 from DeepPurpose.utils_tensorflow import *   
 from DeepPurpose.encoders_tensorflow import *
 
-class Classifier(tf.keras.Model):
+# import tensorflow as tf
+# from tensorflow.keras.layers import Dense, Dropout, concatenate
+
+class Classifier(tf.keras.Sequential):
     def __init__(self, model_drug, model_protein, **config):
         super(Classifier, self).__init__()
         self.input_dim_drug = config['hidden_dim_drug']
@@ -28,37 +34,37 @@ class Classifier(tf.keras.Model):
         self.model_drug = model_drug
         self.model_protein = model_protein
 
-        self.dropout = tf.keras.layers.Dropout(0.1)
+        self.dropout_rate = 0.1
 
         self.hidden_dims = config['cls_hidden_dims']
         layer_size = len(self.hidden_dims) + 1
         dims = [self.input_dim_drug + self.input_dim_protein] + self.hidden_dims + [1]
-
-        self.predictor = [Dense(dims[i+1], activation='relu' if i != layer_size-1 else None) for i in range(layer_size)]
+        
+        self.predictor = [Dense(units=dims[i+1], activation='relu' if i != layer_size-1 else None) for i in range(layer_size)]
 
     def call(self, v_D, v_P):
-        v_D = self.model_drug(v_D)
+        # each encoding
+        v_D = self.model_drug.encode(v_D)
         v_P = self.model_protein(v_P)
-        v_f = tf.concat([v_D, v_P], axis=1)
-        for layer in self.predictor:
-            v_f = layer(self.dropout(v_f))
+
+        # tf.print("Shape of v_D:", tf.shape(v_D))
+        # tf.print("Shape of v_P:", tf.shape(v_P))
+
+        # concatenate and classify
+        v_f = concatenate([v_D, v_P], axis=1)
+        for i, l in enumerate(self.predictor):
+            if i==(len(self.predictor)-1):
+                v_f = l(v_f)
+            else:
+                v_f = tf.nn.relu(Dropout(rate=self.dropout_rate)(l(v_f)))
         return v_f
 
 def model_initialize(**config):
-    model = DBTA(**config)
-    return model
+	model = DBTA(**config)
+	return model
 
-def model_pretrained(path_dir=None, model=None):
-    if model is not None:
-        path_dir = download_pretrained_model(model)
-    config = load_dict(path_dir)
-    model = DBTA(**config)
-    model.load_pretrained(path_dir)
-    return model
-
-class DBTA(tf.keras.Model):
+class DBTA(object):
     def __init__(self, **config):
-        super(DBTA, self).__init__()
         self.config = config
         self.drug_encoding = config['drug_encoding']
         self.target_encoding = config['target_encoding']
@@ -69,10 +75,9 @@ class DBTA(tf.keras.Model):
         self.config['decay'] = self.config.get('decay', 0)
 
         if self.drug_encoding == 'gVAE':
-            grammar_weights = '/lustre/home/debnathk/drug_repurp/acm_bcb/data/vae.hdf5'
-            grammar_model = molecule_vae.ZincGrammarModel(grammar_weights)
-            grammar_model.trainable = False
-            self.drug_model = grammar_model
+            grammar_weights = '../data/vae.hdf5'
+            grammar_model = molecule_vae_single.ZincGrammarModel(grammar_weights)
+            self.model_drug = grammar_model
         # Add other drug encoding methods here
 
         if self.target_encoding == 'CNN':
@@ -120,21 +125,21 @@ class DBTA(tf.keras.Model):
         test_every_X_epoch = self.config.get('test_every_X_epoch', 40)
         loss_history = []
 
-        optimizer = Adam(learning_rate=lr, decay=decay)
+        optimizer = Adam(learning_rate=lr, epsilon=1e-08)
 
         if verbose:
             print('--- Data Preparation ---')
 
         train_dataset = data_process_loader(train.index.values, train.Label.values, train, **self.config)
-        train_dataset = train_dataset.batch(batch_size, drop_remainder=False)
+        # train_dataset = train_dataset.batch(batch_size, drop_remainder=False)
 
         if val is not None:
             val_dataset = data_process_loader(val.index.values, val.Label.values, val, **self.config)
-            val_dataset = val_dataset.batch(batch_size, drop_remainder=False)
+            # val_dataset = val_dataset.batch(batch_size, drop_remainder=False)
 
         if test is not None:
             test_dataset = data_process_loader(test.index.values, test.Label.values, test, **self.config)
-            test_dataset = test_dataset.batch(batch_size, drop_remainder=False)
+            # test_dataset = test_dataset.batch(batch_size, drop_remainder=False)
 
         if self.binary:
             max_auc = 0
@@ -154,6 +159,8 @@ class DBTA(tf.keras.Model):
 
         for epoch in range(train_epoch):
             for i, (v_d, v_p, label) in enumerate(tqdm(train_dataset)):
+                # print("Shape of v_d", v_d.shape)
+                # print("Shape of v_p", v_p.shape)
                 with tf.GradientTape() as tape:
                     score = self.model(v_d, v_p)
                     if self.binary:
@@ -171,8 +178,8 @@ class DBTA(tf.keras.Model):
                     print(f'Training at Epoch {epoch + 1} iteration {i} with loss {loss.numpy():.7f}')
 
             if val is not None:
-                auc, auprc, f1, loss, logits = self.test(val_dataset.take(-1))
                 if self.binary:
+                    auc, auprc, f1, loss, logits = self.test(val_dataset.make_one_shot_iterator(), test=False)
                     lst = [f"epoch {epoch}", auc, auprc, f1]
                     valid_metric_record.append(lst)
                     if auc > max_auc:
@@ -181,7 +188,7 @@ class DBTA(tf.keras.Model):
                     if verbose:
                         print(f'Validation at Epoch {epoch + 1}, AUROC: {auc:.7f}, AUPRC: {auprc:.7f}, F1: {f1:.7f}, Cross-entropy Loss: {loss:.7f}')
                 else:
-                    mse, r2, p_val, CI, logits = self.test(val_dataset.take(-1))
+                    mse, r2, p_val, CI, logits = self.test(val_dataset.make_one_shot_iterator(), test=False)
                     lst = [f"epoch {epoch}", mse, r2, p_val, CI]
                     valid_metric_record.append(lst)
                     if mse < max_mse:
@@ -198,10 +205,10 @@ class DBTA(tf.keras.Model):
             if verbose:
                 print('--- Go for Testing ---')
             if self.binary:
-                auc, auprc, f1, loss, logits = self.test(test_dataset.take(-1), test=True)
+                auc, auprc, f1, loss, logits = self.test(test_dataset.make_one_shot_iterator(), test=True)
                 print(f'Testing AUROC: {auc:.7f}, AUPRC: {auprc:.7f}, F1: {f1:.7f}, Cross-entropy Loss: {loss:.7f}')
             else:
-                mse, r2, p_val, CI, logits = self.test(test_dataset.take(-1))
+                mse, r2, p_val, CI, logits = self.test(test_dataset.make_one_shot_iterator(), test=False)
                 print(f'Testing MSE: {mse:.7f}, Pearson Correlation: {r2:.7f} with p-value: {p_val:.2E}, Concordance Index: {CI:.7f}')
             np.save(os.path.join(self.result_folder, f"{self.drug_encoding}_{self.target_encoding}_logits.npy"), logits)
 
@@ -231,7 +238,7 @@ class DBTA(tf.keras.Model):
         print('predicting...')
         dataset = data_process_loader(df_data.index.values, df_data.Label.values, df_data, **self.config)
         dataset = dataset.batch(self.config['batch_size'], drop_remainder=False)
-        score = self.test(dataset.take(-1), repurposing_mode=True)
+        score = self.test(dataset.make_one_shot_iterator(), repurposing_mode=True)
         return score
     
     def load_pretrained(self, path_dir):
