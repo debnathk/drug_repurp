@@ -97,14 +97,14 @@ class DLEPS(object):
 
         # CNN
         '''Define the CNN encoder for target'''
-        visible_1 = Input(shape=(26, 1000), name="visible_1")
-        conv1_1 = Conv1D(32, 3, strides=1, activation="relu", padding='same')(visible_1)
-        maxpool_1 = MaxPooling1D(pool_size=2)(conv1_1)
-        conv1_2 = Conv1D(64, 3, strides=1, activation="relu", padding='same')(maxpool_1)
-        maxpool_2 = MaxPooling1D(pool_size=2)(conv1_2)
-        flatten_1 = Flatten()(maxpool_2)
-        dense_1 = Dense(56, activation="relu")(flatten_1)
-        cnn_model = Model(inputs=visible_1, outputs=dense_1)
+        # visible_1 = Input(shape=(26, 1000), name="visible_1")
+        # conv1_1 = Conv1D(32, 3, strides=1, activation="relu", padding='same')(visible_1)
+        # maxpool_1 = MaxPooling1D(pool_size=2)(conv1_1)
+        # conv1_2 = Conv1D(64, 3, strides=1, activation="relu", padding='same')(maxpool_1)
+        # maxpool_2 = MaxPooling1D(pool_size=2)(conv1_2)
+        # flatten_1 = Flatten()(maxpool_2)
+        # dense_1 = Dense(56, activation="relu")(flatten_1)
+        # cnn_model = Model(inputs=visible_1, outputs=dense_1)
 
         # refdrug
         class Sampling(Layer):
@@ -119,23 +119,24 @@ class DLEPS(object):
 
         latent_dim = 56
 
-        output_vae = Lambda(sampling, output_shape=(56,), name='lambda')([z_mn, z_var])
-        merge = concatenate([dense_1, output_vae])
+        output_vae = Lambda(sampling, output_shape=(latent_dim,), name='lambda')([z_mn, z_var])
+        # merge = concatenate([dense_1, output_vae])
         # interpretation model
         # hidden1 = Dense(10, activation='relu')(merge)
         # hidden2 = Dense(10, activation='relu')(hidden1)
         # outputs = Dense(1, activation='linear')(hidden2)
         # model = Model(inputs=[visible_1, visible_vae], outputs=output)
-        x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(merge)
-        x = Dropout(0.4)(x)
-        x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(x)
-        x = Dropout(0.4)(x)
-        x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(x)
-        x = Dropout(0.4)(x)
-        x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(x)
-        x = Dropout(0.4)(x)
-        outputs = Dense(1, activation='linear')(x)
-        model = Model(inputs=[visible_1, grammar_model.vae.encoderMV.input], outputs = outputs)
+        # x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(merge)
+        # x = Dropout(0.4)(x)
+        # x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(x)
+        # x = Dropout(0.4)(x)
+        # x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(x)
+        # x = Dropout(0.4)(x)
+        # x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(x)
+        # x = Dropout(0.4)(x)
+        # outputs = Dense(1, activation='linear')(x)
+        model = Model(inputs=grammar_model.vae.encoderMV.input, outputs = output_vae)
+        # model = Model(inputs=[visible_1, grammar_model.vae.encoderMV.input], outputs = outputs)
         
         return model
     

@@ -1,8 +1,10 @@
 
 import numpy as np
+from rdkit.Chem import MolToSmiles, MolFromSmiles
 from rdkit import Chem, DataStructs
+from functools import reduce
 import nltk
-from molecule_vae import xlength, get_zinc_tokenizer
+# from molecule_vae import xlength, get_zinc_tokenizer
 import zinc_grammar
 import warnings
 
@@ -28,7 +30,7 @@ def fraction_valid_smiles(smiles):
             i += 1
     return i*1.0 / len(smiles)
 
-
+'''
 def to1hot(smiles):
     #may have errors because of false smiles
     _tokenize = get_zinc_tokenizer(zinc_grammar.GCFG)
@@ -76,7 +78,7 @@ def to1hot(smiles):
             one_hot[i][np.arange(num_productions),indices[i]] = 1.
             one_hot[i][np.arange(num_productions, MAX_LEN),-1] = 1.            
     return one_hot
-
+'''
 
 def get_fp(smiles):
     fp = []
@@ -197,3 +199,110 @@ def read_smi_file(filename, unique=True):
         molecules = list(molecules)
     f.close()
     return molecules, f.closed
+
+def standardize_smiles(smiles):
+    try:
+        if smiles is not np.nan:
+            return MolToSmiles(MolFromSmiles(smiles))
+    except:
+        return smiles
+    
+def smiles2onehot(s):
+
+    def xlength(y):
+        return reduce(lambda sum, element: sum + 1, y, 0)
+
+    def get_zinc_tokenizer(cfg):
+        long_tokens = [a for a in list(cfg._lexical_index.keys()) if xlength(a) > 1] ####
+        replacements = ['$','%','^'] # ,'&']
+        assert xlength(long_tokens) == len(replacements) ####xzw
+        for token in replacements: 
+            assert token not in cfg._lexical_index ####
+        
+        def tokenize(smiles):
+            for i, token in enumerate(long_tokens):
+                smiles = smiles.replace(token, replacements[i])
+            tokens = []
+            for token in smiles:
+                try:
+                    ix = replacements.index(token)
+                    tokens.append(long_tokens[ix])
+                except:
+                    tokens.append(token)
+            return tokens
+        
+        return tokenize
+    
+    _tokenize = get_zinc_tokenizer(zinc_grammar.GCFG)
+    _parser = nltk.ChartParser(zinc_grammar.GCFG)
+    _productions = zinc_grammar.GCFG.productions()
+    _prod_map = {}
+    for ix, prod in enumerate(_productions):
+        _prod_map[prod] = ix
+    MAX_LEN = 277
+    _n_chars = len(_productions)
+    one_hot = np.zeros((MAX_LEN, _n_chars), dtype=np.float32)
+
+    token = map(_tokenize, s)
+    tokens = []
+    for t in token:
+        tokens.append(t[0])
+    tp = None
+    try:
+        tp = next(_parser.parse(tokens))
+    except:
+        # print("Parse tree error")
+        return one_hot
+
+    productions_seq = tp.productions()
+    idx = np.array([_prod_map[prod] for prod in productions_seq], dtype=int)
+    num_productions = len(idx)
+    if num_productions > MAX_LEN:
+            # print("Too large molecules, out of range")
+            one_hot[np.arange(MAX_LEN),idx[:MAX_LEN]] = 1.
+    else:    
+            one_hot[np.arange(num_productions),idx] = 1.
+            one_hot[np.arange(num_productions, MAX_LEN),-1] = 1.
+
+    return one_hot
+
+amino_char = ['?', 'A', 'C', 'B', 'E', 'D', 'G', 'F', 'I', 'H', 'K', 'M', 'L', 'O',
+       'N', 'Q', 'P', 'S', 'R', 'U', 'T', 'W', 'V', 'Y', 'X', 'Z']
+
+from sklearn.preprocessing import OneHotEncoder
+enc_protein = OneHotEncoder().fit(np.array(amino_char).reshape(-1, 1))
+
+MAX_SEQ_PROTEIN = 1000
+
+def protein2onehot(x):
+    temp = list(x.upper())
+    temp = [i if i in amino_char else '?' for i in temp]
+    if len(temp) < MAX_SEQ_PROTEIN:
+        temp = temp + ['?'] * (MAX_SEQ_PROTEIN-len(temp))
+    else:
+        temp = temp [:MAX_SEQ_PROTEIN]
+
+    return enc_protein.transform(np.array(temp).reshape(-1,1)).toarray().T
+
+def convert_y_unit(y, from_, to_):
+	array_flag = False
+	if isinstance(y, (int, float)):
+		y = np.array([y])
+		array_flag = True
+	y = y.astype(float)    
+	# basis as nM
+	if from_ == 'nM':
+		y = y
+	elif from_ == 'p':
+		y = 10**(-y) / 1e-9
+
+	if to_ == 'p':
+		zero_idxs = np.where(y == 0.)[0]
+		y[zero_idxs] = 1e-10
+		y = -np.log10(y*1e-9)
+	elif to_ == 'nM':
+		y = y
+        
+	if array_flag:
+		return y[0]
+	return y
