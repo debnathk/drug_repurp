@@ -72,71 +72,41 @@ class DLEPS(object):
         #     print('DLEPS: No input of down files\n')
 
     def _build_model(self):
-        # Variational autoencoder weights
+        
+        # gVAE model
         grammar_weights = '../../data/vae.hdf5'
         grammar_model = molecule_vae.ZincGrammarModel(grammar_weights)
         grammar_model.trainable = False
         self.grammar_model = grammar_model
         z_mn, z_var = grammar_model.vae.encoderMV.output
-        # Sequential
-        # visible_1 = Input(shape=(978, 2))
-        # flaten_1 = Flatten()(visible_1)
-        # dense_11 = Dense(1024, activation='relu', kernel_regularizer=regularizers.l2(0.00001))(flaten_1)
-        # drop_1 = Dropout(0.4)(dense_11)
-        # dense_12 = Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.00001))(drop_1)
-        # drop_2 = Dropout(0.4)(dense_12)
-        # dense_13 = Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.00001))(drop_2)
-        # drop_3 = Dropout(0.4)(dense_13)
-        # dense_14 = Dense(128, activation='relu', kernel_regularizer=regularizers.l2(0.00001))(drop_3)
-        # drop_4 = Dropout(0.4)(dense_14)
-        # dense_15 = Dense(56, activation='relu', kernel_regularizer=regularizers.l2(0.00001))(drop_4)
-        # output_1 = Dense(1, activation='linear')(dense_15)
-        # sequential = Model(inputs=visible_1, outputs=output_1)
-        # sequential.load_weights('../../data/sample_weights.h5')
-        # sequential.trainable = False
-
-        # CNN
-        '''Define the CNN encoder for target'''
-        # visible_1 = Input(shape=(26, 1000), name="visible_1")
-        # conv1_1 = Conv1D(32, 3, strides=1, activation="relu", padding='same')(visible_1)
-        # maxpool_1 = MaxPooling1D(pool_size=2)(conv1_1)
-        # conv1_2 = Conv1D(64, 3, strides=1, activation="relu", padding='same')(maxpool_1)
-        # maxpool_2 = MaxPooling1D(pool_size=2)(conv1_2)
-        # flatten_1 = Flatten()(maxpool_2)
-        # dense_1 = Dense(56, activation="relu")(flatten_1)
-        # cnn_model = Model(inputs=visible_1, outputs=dense_1)
-
-        # refdrug
-        class Sampling(Layer):
-            """Uses (z_mean, z_log_var) to sample z, the vector encoding a digit."""
-
-            def call(self, inputs):
-                z_mean, z_log_var = inputs
-                batch = tf.shape(z_mean)[0]
-                dim = tf.shape(z_mean)[1]
-                epsilon = tf.random.normal(shape=(batch, dim))
-                return z_mean + tf.exp(0.5 * z_log_var) * epsilon
-
         latent_dim = 56
+        output_vae = keras.layers.Lambda(sampling, output_shape=(latent_dim,), name='lambda')([z_mn, z_var])
 
-        output_vae = Lambda(sampling, output_shape=(latent_dim,), name='lambda')([z_mn, z_var])
-        # merge = concatenate([dense_1, output_vae])
-        # interpretation model
-        # hidden1 = Dense(10, activation='relu')(merge)
-        # hidden2 = Dense(10, activation='relu')(hidden1)
-        # outputs = Dense(1, activation='linear')(hidden2)
-        # model = Model(inputs=[visible_1, visible_vae], outputs=output)
-        # x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(merge)
-        # x = Dropout(0.4)(x)
-        # x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(x)
-        # x = Dropout(0.4)(x)
-        # x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(x)
-        # x = Dropout(0.4)(x)
-        # x = Dense(512,activation='relu', kernel_regularizer=regularizers.l2(0.00001))(x)
-        # x = Dropout(0.4)(x)
-        # outputs = Dense(1, activation='linear')(x)
-        model = Model(inputs=grammar_model.vae.encoderMV.input, outputs = output_vae)
-        # model = Model(inputs=[visible_1, grammar_model.vae.encoderMV.input], outputs = outputs)
+
+
+        # CNN Model
+        '''Define the CNN encoder for target'''
+        visible_1 = keras.layers.Input(shape=(26, 1000), name="visible_1")
+        conv1_1 = keras.layers.Conv1D(32, 3, strides=1, activation="relu", padding='same')(visible_1)
+        maxpool_1 = keras.layers.MaxPooling1D(pool_size=2)(conv1_1)
+        conv1_2 = keras.layers.Conv1D(64, 3, strides=1, activation="relu", padding='same')(maxpool_1)
+        maxpool_2 = keras.layers.MaxPooling1D(pool_size=2)(conv1_2)
+        flatten_1 = keras.layers.Flatten()(maxpool_2)
+        output_cnn = keras.layers.Dense(56, activation="relu")(flatten_1)
+
+        # cnn_model = keras.models.Model(inputs=inputs, outputs=outputs)
+
+        merge = keras.layers.concatenate([output_vae, output_cnn])
+        x = keras.layers.Dense(512,activation='relu', kernel_regularizer=keras.regularizers.l2(0.00001))(merge)
+        x = keras.layers.Dropout(0.4)(x)
+        x = keras.layers.Dense(512,activation='relu', kernel_regularizer=keras.regularizers.l2(0.00001))(x)
+        x = keras.layers.Dropout(0.4)(x)
+        x = keras.layers.Dense(512,activation='relu', kernel_regularizer=keras.regularizers.l2(0.00001))(x)
+        x = keras.layers.Dropout(0.4)(x)
+        x = keras.layers.Dense(512,activation='relu', kernel_regularizer=keras.regularizers.l2(0.00001))(x)
+        x = keras.layers.Dropout(0.4)(x)
+        outputs = keras.layers.Dense(1, activation='linear')(x)
+        model = keras.models.Model(inputs=[grammar_model.vae.encoderMV.input, visible_1], outputs = outputs)
         
         return model
     

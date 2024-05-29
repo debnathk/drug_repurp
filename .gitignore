@@ -1,5 +1,4 @@
 data
-dleps
 *.h5
 *.npy
 __pycache__

@@ -7,6 +7,7 @@ import nltk
 # from molecule_vae import xlength, get_zinc_tokenizer
 import zinc_grammar
 import warnings
+import pandas as pd
 
 
 def decrease_learning_rate(optimizer, decrease_by=0.01):
@@ -306,3 +307,104 @@ def convert_y_unit(y, from_, to_):
 	if array_flag:
 		return y[0]
 	return y
+
+import numpy as np
+
+def train_val_test_split(X1, X2, y, train_size=0.7, val_size=0.15, test_size=0.15, random_state=None):
+    """
+    Split the data into train, validation, and test sets.
+
+    Parameters:
+    X1 : array-like, shape (n_samples, n_features1)
+        First feature matrix.
+        
+    X2 : array-like, shape (n_samples, n_features2)
+        Second feature matrix.
+
+    y : array-like, shape (n_samples,)
+        Target variable.
+
+    train_size : float, optional (default=0.7)
+        Proportion of the dataset to include in the train split.
+
+    val_size : float, optional (default=0.15)
+        Proportion of the dataset to include in the validation split.
+
+    test_size : float, optional (default=0.15)
+        Proportion of the dataset to include in the test split.
+
+    random_state : int or RandomState instance or None, optional (default=None)
+        Controls the shuffling applied to the data before splitting.
+
+    Returns:
+    X1_train, X2_train, y_train : arrays
+        Training set.
+
+    X1_val, X2_val, y_val : arrays
+        Validation set.
+
+    X1_test, X2_test, y_test : arrays
+        Test set.
+    """
+    assert train_size + val_size + test_size == 1, "The sum of train_size, val_size, and test_size must equal 1."
+
+    # Compute sizes
+    num_samples = len(X1)
+    num_train = int(train_size * num_samples)
+    num_val = int(val_size * num_samples)
+
+    # Shuffle indices
+    indices = np.arange(num_samples)
+    if random_state is not None:
+        np.random.seed(random_state)
+    np.random.shuffle(indices)
+
+    # Split indices
+    train_indices = indices[:num_train]
+    val_indices = indices[num_train:num_train + num_val]
+    test_indices = indices[num_train + num_val:]
+
+    # Split datasets
+    X1_train, X2_train = X1[train_indices], X2[train_indices]
+    X1_val, X2_val = X1[val_indices], X2[val_indices]
+    X1_test, X2_test = X1[test_indices], X2[test_indices]
+    y_train, y_val, y_test = y[train_indices], y[val_indices], y[test_indices]
+
+    return X1_train, X2_train, y_train, X1_val, X2_val, y_val, X1_test, X2_test, y_test
+
+def clean_data(data, fill_value=0):
+    """
+    Fill NaN or infinite values in a 1D or 3D NumPy array.
+
+    Parameters:
+    data (np.ndarray): The input array to process. Can be 1D or 3D.
+    fill_value (any): The value to use when filling NaN/infinite values in 3D data.
+
+    Returns:
+    np.ndarray: The array with NaN and infinite values filled.
+    """
+    if data.ndim == 1:
+        # Replace infinite values with NaN for uniform processing
+        data = np.where(np.isinf(data), np.nan, data)
+        # Convert to pandas Series for easier handling
+        series = pd.Series(data)
+        # Fill NaN values with mean
+        filled_series = series.fillna(series.mean())
+        return filled_series.values
+    elif data.ndim == 3:
+        # Replace infinite values with NaN for uniform processing
+        data = np.where(np.isinf(data), np.nan, data)
+        
+        n_samples, n_features, n_timesteps = data.shape
+        filled_data = np.copy(data)
+        
+        for i in range(n_features):
+            feature_data = data[:, i, :]
+            df = pd.DataFrame(feature_data)
+            # Fill NaN values with the constant value
+            df_filled = df.fillna(fill_value)
+            filled_data[:, i, :] = df_filled.values
+        
+        return filled_data
+    else:
+        raise ValueError("Data must be either 1D or 3D")
