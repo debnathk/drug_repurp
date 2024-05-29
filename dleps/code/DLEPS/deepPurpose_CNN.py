@@ -5,29 +5,23 @@ from keras import layers
 class CNN:
     def __init__(self):
         self.input_shape = (26, 1000)  # Hardcoded input shape
-        self.output_units = 56
         self.encoder_model = self._build_encoder()
 
     def _build_encoder(self):
+        # Hardcoded configuration
+        in_channels = [26, 32, 64, 96]
+        kernels = [4, 8, 12]
+        output_units = 256
+
+        # Create layers
         inputs = keras.Input(shape=self.input_shape)
-        
-        # Reshape to add channel dimension (needed for Conv2D)
-        x = layers.Reshape((self.input_shape[0], self.input_shape[1], 1))(inputs)
-        
-        # Convolutional layers
-        x = layers.Conv2D(32, (3, 3), activation='relu', padding='same')(x)
-        x = layers.MaxPooling2D((2, 2), padding='same')(x)
-        
-        x = layers.Conv2D(64, (3, 3), activation='relu', padding='same')(x)
-        x = layers.MaxPooling2D((2, 2), padding='same')(x)
-        
-        # Flattening the layer
-        x = layers.Flatten()(x)
-        
-        # Dense layers
-        x = layers.Dense(128, activation='relu')(x)
-        
-        outputs = layers.Dense(self.output_units, activation='softmax')(x)
+        x = inputs
+        for i in range(len(kernels)):
+            x = layers.Conv1D(filters=in_channels[i+1], kernel_size=kernels[i], activation="relu", padding="same")(x)
+            x = layers.MaxPooling1D(pool_size=2, padding="same")(x)
+        x = layers.GlobalMaxPooling1D()(x)
+        x = layers.Dense(output_units, activation="relu")(x)
+        outputs = layers.Dense(output_units, activation="softmax")(x)
 
         encoder_model = keras.models.Model(inputs=inputs, outputs=outputs)
 
@@ -43,6 +37,7 @@ if __name__ == "__main__":
 
     # Instantiate the CNNEncoder class
     cnn_encoder = CNN()
+    print(cnn_encoder.summary())
 
     # Generate some synthetic data
     num_samples = 10
