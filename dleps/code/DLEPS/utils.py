@@ -3,6 +3,7 @@ import numpy as np
 from rdkit.Chem import MolToSmiles, MolFromSmiles
 from rdkit import Chem, DataStructs
 from functools import reduce
+from scipy.stats import pearsonr
 import nltk
 # from molecule_vae import xlength, get_zinc_tokenizer
 import zinc_grammar
@@ -408,3 +409,95 @@ def clean_data(data, fill_value=0):
         return filled_data
     else:
         raise ValueError("Data must be either 1D or 3D")
+    
+def extract_drug_name(input_string):
+    # Split the string by underscores
+    parts = input_string.split('_')
+    
+    # Check if there are at least five parts to avoid IndexError
+    if len(parts) > 4:
+        return parts[4]
+    else:
+        return "Error: Input string does not contain enough parts"
+    
+def l1000_data_preprocessing(cleaned_data):
+     
+     landmark_genes = pd.read_csv("../../data/landmark_genes.csv", header=None)
+     
+     return None
+
+
+def pearson_correlation(y_pred, y_test):
+    """
+    Calculate the Pearson correlation coefficient between two arrays.
+
+    Parameters:
+    y_pred (array-like): Predicted values
+    y_test (array-like): Actual values
+
+    Returns:
+    float: Pearson correlation coefficient
+    float: p-value
+    """
+    # Calculate the Pearson correlation coefficient and the p-value
+    correlation, p_value = pearsonr(y_pred, y_test)
+    
+    return correlation, p_value
+
+def mse_loss(y_true, y_pred):
+    """
+    Calculate the Mean Squared Error (MSE) between true and predicted values.
+
+    Parameters:
+    y_true (numpy array): Array of true values.
+    y_pred (numpy array): Array of predicted values.
+
+    Returns:
+    float: The MSE value.
+    """
+    # Ensure inputs are numpy arrays
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    
+    # Calculate the squared differences
+    squared_diffs = (y_true - y_pred) ** 2
+    
+    # Compute the mean of squared differences
+    mse = np.mean(squared_diffs)
+    
+    return mse
+
+def c_index(y_true, y_pred):
+    """
+    Calculate the Concordance Index (C-index) between true survival times and predicted risk scores.
+
+    Parameters:
+    y_true (numpy array): Array of true survival times.
+    y_pred (numpy array): Array of predicted risk scores.
+
+    Returns:
+    float: The C-index value.
+    """
+    # Ensure inputs are numpy arrays
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    
+    # Initialize counters
+    concordant_pairs = 0
+    permissible_pairs = 0
+    
+    # Iterate through all pairs of subjects
+    for i in range(len(y_true)):
+        for j in range(i + 1, len(y_true)):
+            if y_true[i] != y_true[j]:  # Check if the pair is permissible
+                permissible_pairs += 1
+                # Check if the predictions are concordant
+                if (y_true[i] < y_true[j] and y_pred[i] < y_pred[j]) or (y_true[i] > y_true[j] and y_pred[i] > y_pred[j]):
+                    concordant_pairs += 1
+                elif y_pred[i] == y_pred[j]:
+                    concordant_pairs += 0.5  # Tie in predictions are considered half-concordant
+
+    # Calculate the C-index
+    c_index = concordant_pairs / permissible_pairs if permissible_pairs > 0 else 0
+    
+    return c_index

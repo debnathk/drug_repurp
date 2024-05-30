@@ -73,7 +73,7 @@ class DLEPS(object):
 
     def _build_model(self):
         
-        # gVAE model
+        # gVAE model - for drugs
         grammar_weights = '../../data/vae.hdf5'
         grammar_model = molecule_vae.ZincGrammarModel(grammar_weights)
         grammar_model.trainable = False
@@ -83,8 +83,11 @@ class DLEPS(object):
         output_vae = keras.layers.Lambda(sampling, output_shape=(latent_dim,), name='lambda')([z_mn, z_var])
 
 
+        # Dense model - for rnaseq
+        
 
-        # CNN Model
+
+        # CNN Model - for proteins
         '''Define the CNN encoder for target'''
         in_channels = [26, 32, 64, 96]
         kernels = [4, 8, 12]
