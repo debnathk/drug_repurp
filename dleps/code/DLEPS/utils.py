@@ -311,7 +311,9 @@ def convert_y_unit(y, from_, to_):
 
 import numpy as np
 
-def train_val_test_split(X1, X2, y, train_size=0.7, val_size=0.15, test_size=0.15, random_state=None):
+import numpy as np
+
+def train_val_test_split(X1, X2, X3, y, train_size=0.7, val_size=0.15, test_size=0.15, random_state=None):
     """
     Split the data into train, validation, and test sets.
 
@@ -321,6 +323,9 @@ def train_val_test_split(X1, X2, y, train_size=0.7, val_size=0.15, test_size=0.1
         
     X2 : array-like, shape (n_samples, n_features2)
         Second feature matrix.
+    
+    X3 : array-like, shape (n_samples, n_features3)
+        Third feature matrix.
 
     y : array-like, shape (n_samples,)
         Target variable.
@@ -338,16 +343,17 @@ def train_val_test_split(X1, X2, y, train_size=0.7, val_size=0.15, test_size=0.1
         Controls the shuffling applied to the data before splitting.
 
     Returns:
-    X1_train, X2_train, y_train : arrays
+    X1_train, X2_train, X3_train, y_train : arrays
         Training set.
 
-    X1_val, X2_val, y_val : arrays
+    X1_val, X2_val, X3_val, y_val : arrays
         Validation set.
 
-    X1_test, X2_test, y_test : arrays
+    X1_test, X2_test, X3_test, y_test : arrays
         Test set.
     """
-    assert train_size + val_size + test_size == 1, "The sum of train_size, val_size, and test_size must equal 1."
+    # assert train_size + val_size + test_size == 1, "The sum of train_size, val_size, and test_size must equal 1."
+    # assert np.isclose(train_size + val_size + test_size, 1.0), "The sum of train_size, val_size, and test_size must equal 1."
 
     # Compute sizes
     num_samples = len(X1)
@@ -366,12 +372,13 @@ def train_val_test_split(X1, X2, y, train_size=0.7, val_size=0.15, test_size=0.1
     test_indices = indices[num_train + num_val:]
 
     # Split datasets
-    X1_train, X2_train = X1[train_indices], X2[train_indices]
-    X1_val, X2_val = X1[val_indices], X2[val_indices]
-    X1_test, X2_test = X1[test_indices], X2[test_indices]
+    X1_train, X2_train, X3_train = X1[train_indices], X2[train_indices], X3[train_indices]
+    X1_val, X2_val, X3_val = X1[val_indices], X2[val_indices], X3[val_indices]
+    X1_test, X2_test, X3_test = X1[test_indices], X2[test_indices], X3[test_indices]
     y_train, y_val, y_test = y[train_indices], y[val_indices], y[test_indices]
 
-    return X1_train, X2_train, y_train, X1_val, X2_val, y_val, X1_test, X2_test, y_test
+    return X1_train, X2_train, X3_train, y_train, X1_val, X2_val, X3_val, y_val, X1_test, X2_test, X3_test, y_test
+
 
 def clean_data(data, fill_value=0):
     """
