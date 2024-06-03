@@ -76,7 +76,7 @@ class DLEPS(object):
         # gVAE model
         grammar_weights = '../../data/vae.hdf5'
         grammar_model = molecule_vae.ZincGrammarModel(grammar_weights)
-        grammar_model.trainable = False
+        # grammar_model.trainable = False
         self.grammar_model = grammar_model
         z_mn, z_var = grammar_model.vae.encoderMV.output
         latent_dim = 56
