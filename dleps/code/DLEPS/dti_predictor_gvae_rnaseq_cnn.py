@@ -73,19 +73,23 @@ class DLEPS(object):
 
     def _build_model(self):
         
-        # gVAE model - for drugs
+        # gVAE network - for drugs
         grammar_weights = '../../data/vae.hdf5'
         grammar_model = molecule_vae.ZincGrammarModel(grammar_weights)
         grammar_model.trainable = False
         self.grammar_model = grammar_model
         z_mn, z_var = grammar_model.vae.encoderMV.output
         latent_dim = 56
-        output_vae = keras.layers.Lambda(sampling, output_shape=(latent_dim,), name='lambda')([z_mn, z_var])
+        output_gvae = keras.layers.Lambda(sampling, output_shape=(latent_dim,), name='lambda')([z_mn, z_var])
 
-
-        # Dense model - for rnaseq
-        
-
+        # Dense network - for rna seq data
+        input_dense = keras.Input(shape=(978, 2))
+        x = keras.layers.Flatten()(input_dense)
+        x = keras.layers.Dense(256, activation="relu")(x)
+        x = keras.layers.Dropout(0.4)(x)
+        x = keras.layers.Dense(128, activation="relu")(x)
+        x = keras.layers.Dropout(0.4)(x)
+        output_dense = keras.layers.Dense(latent_dim, activation="softmax")(x)
 
         # CNN Model - for proteins
         '''Define the CNN encoder for target'''
@@ -102,9 +106,9 @@ class DLEPS(object):
         x = keras.layers.Dense(latent_dim, activation="relu")(x)
         output_cnn = keras.layers.Dense(latent_dim, activation="softmax")(x)
 
-        # cnn_model = keras.models.Model(inputs=inputs, outputs=outputs)
+    
 
-        merge = keras.layers.concatenate([output_vae, output_cnn])
+        merge = keras.layers.concatenate([output_gvae, output_dense, output_cnn])
         x = keras.layers.Dense(1024,activation='relu', kernel_regularizer=keras.regularizers.l2(0.00001))(merge)
         x = keras.layers.Dropout(0.4)(x)
         x = keras.layers.Dense(1024,activation='relu', kernel_regularizer=keras.regularizers.l2(0.00001))(x)
@@ -112,7 +116,7 @@ class DLEPS(object):
         x = keras.layers.Dense(512,activation='relu', kernel_regularizer=keras.regularizers.l2(0.00001))(x)
         x = keras.layers.Dropout(0.4)(x)
         outputs = keras.layers.Dense(1, activation='linear')(x)
-        model = keras.models.Model(inputs=[grammar_model.vae.encoderMV.input, visible_1], outputs = outputs)
+        model = keras.models.Model(inputs=[grammar_model.vae.encoderMV.input, input_dense, visible_1], outputs = outputs)
         
         return model
     
