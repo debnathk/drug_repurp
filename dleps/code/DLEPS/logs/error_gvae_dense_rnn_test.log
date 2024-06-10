@@ -1,0 +1,18 @@
+Using TensorFlow backend.
+2024-06-10 10:26:06.248252: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'cudart64_100.dll'; dlerror: cudart64_100.dll not found
+2024-06-10 10:26:06.251484: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+WARNING:tensorflow:From C:\Users\debnathk\AppData\Local\miniconda3\envs\dleps\lib\site-packages\tensorflow_core\python\ops\resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+2024-06-10 10:26:20.787343: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'nvcuda.dll'; dlerror: nvcuda.dll not found
+2024-06-10 10:26:20.793939: E tensorflow/stream_executor/cuda/cuda_driver.cc:318] failed call to cuInit: UNKNOWN ERROR (303)
+2024-06-10 10:26:20.820969: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:169] retrieving CUDA diagnostic information for host: EGR-GHOSH-15
+2024-06-10 10:26:20.827595: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:176] hostname: EGR-GHOSH-15
+2024-06-10 10:26:20.835439: I tensorflow/core/platform/cpu_feature_guard.cc:142] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2
+WARNING:tensorflow:From C:\Users\debnathk\Desktop\study\drug_repurp\dleps\code\DLEPS\models\model_zinc.py:115: div (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Deprecated in favor of operator or tf.math.divide.
+WARNING:tensorflow:From C:\Users\debnathk\AppData\Local\miniconda3\envs\dleps\lib\site-packages\keras\backend\tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+2024-06-10 10:30:03,092 - WARNING - From C:\Users\debnathk\AppData\Local\miniconda3\envs\dleps\lib\site-packages\keras\backend\tensorflow_backend.py:422: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
