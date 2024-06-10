@@ -2,7 +2,7 @@ data
 *.h5
 *.npy
 __pycache__
-*.png
+# *.png
 *.out
 *.sdf
 *.smi
